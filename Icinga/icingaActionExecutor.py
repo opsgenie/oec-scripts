@@ -14,7 +14,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('-payload', '--queuePayload', help='Payload from queue', required=True)
 parser.add_argument('-apiKey', '--apiKey', help='The apiKey of the integration', required=True)
 parser.add_argument('-opsgenieUrl', '--opsgenieUrl', help='The url', required=True)
-parser.add_argument('-loglevel', '--loglevel', help='Level of log', required=True)
+parser.add_argument('-logLevel', '--logLevel', help='Level of log', required=True)
 parser.add_argument('-command_url', '--command_url', help='Icinga Server URL', required=False)
 parser.add_argument('-trends_image_url', '--trends_image_url', help='Trends URL', required=False)
 parser.add_argument('-alert_histogram_image_url', '--alert_histogram_image_url', help='Alert Histogram Image URL',
@@ -30,7 +30,7 @@ args = vars(parser.parse_args())
 queue_message_string = args['queuePayload']
 queue_message = json.loads(queue_message_string)
 
-logging.basicConfig(stream=sys.stdout, level=args['loglevel'])
+logging.basicConfig(stream=sys.stdout, level=args['logLevel'])
 
 
 def parse_field(key, mandatory):
