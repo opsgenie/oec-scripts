@@ -22,9 +22,9 @@ logging.basicConfig(stream=sys.stdout, level=args['loglevel'])
 
 
 def parse_field(key, mandatory):
-    variable = queue_message[key]
-    if not variable.strip():
-        variable = args[key]
+    variable = queue_message.get(key)
+    if not variable:
+        variable = args.get(key)
     if mandatory and not variable:
         logging.error(LOG_PREFIX + " Skipping action, Mandatory conf item '" + key +
                       "' is missing. Check your configuration file.")
@@ -34,7 +34,7 @@ def parse_field(key, mandatory):
 
 
 def parse_timeout():
-    parsed_timeout = args['http.timeout']
+    parsed_timeout = args.get('http.timeout')
     if not parsed_timeout:
         return 30000
     return int(parsed_timeout)
@@ -52,10 +52,11 @@ def get_transition_id(request_headers, jira_url, transition_name, token):
                 if transition_name == to['name']:
                     transition_id = transition['id']
             logging.info(LOG_PREFIX + " Successfully executed at Jira")
-            logging.debug(LOG_PREFIX + " Jira response: " + response.status_code + " " + response.content)
+            logging.debug(LOG_PREFIX + " Jira response: " + str(response.status_code) + " " + str(response.content))
         else:
             logging.error(
-                LOG_PREFIX + " Could not execute at Jira; response: " + response.content + " status code: " + response.status_code)
+                LOG_PREFIX + " Could not execute at Jira; response: " + str(response.content) + " status code: " + str(
+                    response.status_code))
         if not transition_id:
             logging.debug(LOG_PREFIX + " Transition id is empty")
         return transition_id
@@ -69,10 +70,11 @@ def main():
     global timeout
 
     queue_message_string = args['queuePayload']
+    queue_message_string = queue_message_string.strip()
     queue_message = json.loads(queue_message_string)
 
-    alert_id = queue_message["alert"]["alertId"]
-    mapped_action = queue_message["mappedAction"]["name"]
+    alert_id = queue_message["alertId"]
+    mapped_action = queue_message["mappedActionV2"]["name"]
 
     LOG_PREFIX = "[" + mapped_action + "]"
 
@@ -82,10 +84,10 @@ def main():
     url = parse_field('url', True)
     username = parse_field('username', True)
     password = parse_field('password', True)
-    project_key = parse_field('projectKey', True)
-    issue_type_name = parse_field('issueType', True)
+    project_key = parse_field('projectKey', False)
+    issue_type_name = parse_field('issueTypeName', False)
 
-    issue_key = queue_message["key"]
+    issue_key = queue_message.get("key")
 
     logging.debug("Url: " + str(url))
     logging.debug("Username: " + str(username))
@@ -105,21 +107,21 @@ def main():
 
     if mapped_action == "addCommentToIssue":
         content_params = {
-            "body": queue_message['body']
+            "body": queue_message.get('body')
         }
         result_url += "/" + issue_key + "/comment"
     elif mapped_action == "createIssue":
-        toLabel = "ogAlias:" + queue_message["alias"]
+        toLabel = "ogAlias:" + queue_message.get("alias")
         content_params = {
             "fields": {
                 "project": {
                     "key": project_key
                 },
-                "issueType": {
+                "issuetype": {
                     "name": issue_type_name
                 },
-                "summary": queue_message["summary"],
-                "description": queue_message["description"],
+                "summary": queue_message.get("summary"),
+                "description": queue_message.get("description"),
                 "labels": [toLabel.replace("\\s", "")]
             }
         }
@@ -162,6 +164,7 @@ def main():
             }
         }
 
+    logging.debug(str(content_params))
     response = requests.post(result_url, data=json.dumps(content_params), headers=headers, auth=token,
                              timeout=timeout)
     if response.status_code < 299:
@@ -172,7 +175,7 @@ def main():
                 if response_body:
                     issue_key_from_response = response_body['key']
                     if issue_key_from_response:
-                        alert_api_url = args['opsgenieUrl'] + "/" + alert_id + "/details"
+                        alert_api_url = args['opsgenieUrl'] + "/v2/alerts/" + alert_id + "/details"
                         content = {
                             "details":
                                 {
@@ -184,16 +187,19 @@ def main():
                             "Accept-Language": "application/json",
                             "Authorization": "GenieKey " + args['apiKey']
                         }
+                        logging.debug(str(alert_api_url) + str(content) + str(headers))
                         alert_response = requests.post(alert_api_url,
                                                        data=json.dumps(content), headers=headers,
                                                        timeout=timeout)
                         if alert_response.status_code < 299:
                             logging.info(LOG_PREFIX + " Successfully sent to Opsgenie")
                             logging.debug(
-                                LOG_PREFIX + " Jira response: " + alert_response.content + " " + alert_response.status_code)
+                                LOG_PREFIX + " Jira response: " + str(alert_response.content) + " " + str(
+                                    alert_response.status_code))
                         else:
                             logging.warning(
-                                LOG_PREFIX + " Could not execute at Opsgenie; response: " + alert_response.content + " status code: " + alert_response.status_code)
+                                LOG_PREFIX + " Could not execute at Opsgenie; response: " + str(
+                                    alert_response.content) + " status code: " + str(alert_response.status_code))
                 else:
                     logging.warning(
                         LOG_PREFIX + " Jira response is empty")
@@ -201,7 +207,8 @@ def main():
                 logging.error()
     else:
         logging.warning(
-            LOG_PREFIX + " Could not execute at Jira; response: " + response.content + " status code: " + response.status_code)
+            LOG_PREFIX + " Could not execute at Jira; response: " + str(response.content) + " status code: " + str(
+                response.status_code))
 
 
 if __name__ == '__main__':
