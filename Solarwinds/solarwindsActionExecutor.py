@@ -1,17 +1,17 @@
 import argparse
 import json
+import logging
 import sys
+import time
 
 import requests
 from requests.auth import HTTPBasicAuth
-import logging
-import time
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-payload', '--payload', help='Payload from queue', required=True)
 parser.add_argument('-apiKey', '--apiKey', help='The apiKey of the integration', required=True)
 parser.add_argument('-opsgenieUrl', '--opsgenieUrl', help='The url', required=True)
-parser.add_argument('-loglevel', '--loglevel', help='Level of log', required=True)
+parser.add_argument('-logLevel', '--logLevel', help='Level of log', required=True)
 parser.add_argument('-url', '--url', help='Your solarwinds server IP or FQDN', required=False)
 parser.add_argument('-login', '--login', help='Name of Solarwinds user that can acknowledge alerts', required=False)
 parser.add_argument('-password', '--password', help='Password for Solarwinds user that can acknowledge alerts',
@@ -20,16 +20,17 @@ parser.add_argument('-timeout', '--timeout', help='Timeout', required=False)
 
 args = vars(parser.parse_args())
 
-logging.basicConfig(stream=sys.stdout, level=args['loglevel'])
+logging.basicConfig(stream=sys.stdout, level=args['logLevel'])
 
 queue_message_string = args['payload']
 queue_message = json.loads(queue_message_string)
+logging.debug(queue_message)
 
 
 def parse_field(key, mandatory):
-    variable = queue_message[key]
-    if not variable.strip():
-        variable = args[key]
+    variable = queue_message.get(key)
+    if not variable:
+        variable = args.get(key)
     if mandatory and not variable:
         logging.error(LOG_PREFIX + " Skipping action, Mandatory conf item '" + key +
                       "' is missing. Check your configuration file.")
@@ -109,16 +110,12 @@ def main():
 
     LOG_PREFIX = "[" + action + "]:"
 
-    logging.warning(
-        LOG_PREFIX + " Alert: AlertId:[" + alert["alertId"] + "] Note:[" + alert["note"] + "] Source: [" + str(
-            source) + "]")
-
     username = parse_field('login', True)
     password = parse_field('password', True)
     url = parse_field('url', True)
     timeout = args['timeout']
 
-    if timeout is None:
+    if not timeout:
         timeout = 30000
     else:
         timeout = int(timeout)
@@ -142,7 +139,7 @@ def main():
     if "data" in content.keys():
         alert_from_opsgenie = content["data"]
         if source["type"].lower() != "solarwinds":
-            definition_id = alert_from_opsgenie["definition"]["AlertDefinitionID"]
+            definition_id = alert_from_opsgenie["details"]["AlertDefinitionID"]
             logging.debug("alertDefinitionID: " + str(definition_id))
             object_type = alert_from_opsgenie["details"]["ObjectType"]
             logging.debug("objectType: " + str(object_type))
@@ -150,26 +147,28 @@ def main():
             logging.debug("objectID: " + str(object_id))
 
             str_updated = time.strftime("%m/%d/%Y, %H:%M:%S")
-
+            alert_username = str(alert.get("username"))
+            alert_note = str(alert.get("note"))
+            alert_message = str(alert.get("message"))
             if action == "Acknowledge":
-                message = alert["username"] + " acknowledged alert: \"" + alert["note"] + "\" on alert: \"" + alert[
-                    "message"] + "\""
-                comment = str_updated + " Acknowledged in Opsgenie by " + alert["username"]
+                message = alert_username + " acknowledged alert: \"" + alert_note + "\" on alert: \"" + \
+                          alert_message + "\""
+                comment = str_updated + " Acknowledged in Opsgenie by " + alert_username
                 acknowledge_solarwinds_alert(url, auth_token, object_id, comment)
 
             elif action == "AddNote":
-                message = alert["username"] + " added note to alert: \"" + alert["note"] + "\" on alert: \"" + alert[
-                    "message"] + "\""
-                comment = str_updated + " Updated by " + alert["username"] + " from OpsGenie: " + alert["note"]
+                message = alert_username + " added note to alert: \"" + alert_note + "\" on alert: \"" + \
+                          alert[
+                              "message"] + "\""
+                comment = str_updated + " Updated by " + alert_username + " from OpsGenie: " + alert_note
                 add_note_solarwinds_alert(url, auth_token, object_id, comment)
 
             elif action == "Close":
-                message = alert["username"] + " closed alert: \"" + alert["note"] + "\" on alert: \"" + alert[
-                    "message"] + "\""
-                comment = str_updated + " Updated by " + alert["username"] + " from OpsGenie: " + alert["note"]
+                message = alert_username + " closed alert: \"" + alert_note + "\" on alert: \"" + alert_message + "\""
+                comment = str_updated + " Updated by " + alert_username + " from OpsGenie: " + alert_note
                 close_solarwinds_alert(url, auth_token, object_id, comment)
             else:
-                message = alert["username"] + " executed [" + action + "] action on alert: \"" + alert["message"] + "\""
+                message = alert_username + " executed [" + action + "] action on alert: \"" + alert_message + "\""
 
             logging.info(LOG_PREFIX + " " + message)
 
