@@ -9,13 +9,13 @@ parser = argparse.ArgumentParser()
 parser.add_argument('-payload', '--queuePayload', help='Payload from queue', required=True)
 parser.add_argument('-apiKey', '--apiKey', help='The apiKey of the integration', required=True)
 parser.add_argument('-opsgenieUrl', '--opsgenieUrl', help='The url', required=True)
-parser.add_argument('-loglevel', '--loglevel', help='Log level', required=True)
+parser.add_argument('-logLevel', '--logLevel', help='Log level', required=True)
 parser.add_argument('-command_url', '--command_url', help='The Command URL', required=False)
 parser.add_argument('-user', '--user', help='User', required=False)
 parser.add_argument('-password', '--password', help='Password', required=False)
 args = vars(parser.parse_args())
 
-logging.basicConfig(stream=sys.stdout, level=args['loglevel'])
+logging.basicConfig(stream=sys.stdout, level=args['logLevel'])
 
 
 def parse_field(key, mandatory):
@@ -89,7 +89,7 @@ def main():
     logging.debug("Action: " + action)
 
     if alert_id:
-        alert_api_url = args['opsgenieUrl'] + "/" + alert_id
+        alert_api_url = args['opsgenieUrl'] + "/v2/alerts/" + alert_id
         headers = {
             "Content-Type": "application/json",
             "Accept-Language": "application/json",
