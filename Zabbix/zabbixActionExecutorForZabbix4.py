@@ -19,19 +19,19 @@ logging.basicConfig(stream=sys.stdout, level=args['logLevel'])
 
 
 def parse_field(key, mandatory):
-    variable = queue_message[key]
-    if not variable.strip():
-        variable = args[key]
+    variable = queue_message.get(key)
+    if not variable:
+        variable = args.get(key)
     if mandatory and not variable:
-        logging.error(LOG_PREFIX + " Skipping action, Mandatory conf item '" + key +
+        logging.error(LOG_PREFIX + " Skipping action, Mandatory conf item '" + str(key) +
                       "' is missing. Check your configuration file.")
-        raise ValueError(LOG_PREFIX + " Skipping action, Mandatory conf item '" + key +
+        raise ValueError(LOG_PREFIX + " Skipping action, Mandatory conf item '" + str(key) +
                          "' is missing. Check your configuration file.")
     return variable
 
 
 def parse_timeout():
-    parsed_timeout = args['http.timeout']
+    parsed_timeout = args.get('http.timeout')
     if not parsed_timeout:
         return 30000
     return int(parsed_timeout)
@@ -47,17 +47,17 @@ def login_to_zabbix(user, password, url):
         },
         "id": 1
     }
-    logging.debug(LOG_PREFIX + " Logging in to Zabbix. Url: " + url + " user: " + user)
+    logging.debug(LOG_PREFIX + " Logging in to Zabbix. Url: " + str(url) + " user: " + str(user))
     content_headers = {
         "Content-Type": "application/json"
     }
     login_result = requests.post(url, data=json.dumps(login_params), headers=content_headers, timeout=timeout)
-    logging.debug(LOG_PREFIX + " login response: " + login_result.status_code + " " + login_result.json())
-    if login_result.json() and not login_result.json()['error']:
+    logging.debug(LOG_PREFIX + " login response: " + str(login_result.status_code) + " " + str(login_result.json()))
+    if login_result.json() and not login_result.json().get('error'):
         return login_result.json()['result']
     else:
         logging.error(
-            LOG_PREFIX + " Cannot login to Zabbix: Response " + login_result.status_code + " " + login_result.content)
+            LOG_PREFIX + " Cannot login to Zabbix: Response " + str(login_result.status_code) + " " + str(login_result.content))
 
 
 def main():
@@ -76,17 +76,17 @@ def main():
 
     timeout = parse_timeout()
 
-    logging.info("Will execute " + action + " for alertId " + alert_id)
+    logging.info("Will execute " + str(action) + " for alertId " + str(alert_id))
 
     username = parse_field('user', True)
     password = parse_field('password', True)
     url = parse_field('command_url', True)
 
-    logging.debug("Username: " + username)
-    logging.debug("Command Url: " + url)
-    logging.debug("AlertId: " + alert_id)
-    logging.debug("Source: " + source)
-    logging.debug("Action: " + action)
+    logging.debug("Username: " + str(username))
+    logging.debug("Command Url: " + str(url))
+    logging.debug("AlertId: " + str(alert_id))
+    logging.debug("Source: " + str(source))
+    logging.debug("Action: " + str(action))
 
     if alert_id:
         alert_api_url = args['opsgenieUrl'] + "/v2/alerts/" + alert_id
@@ -120,7 +120,7 @@ def main():
                             "Content-Type": "application/json",
                         }
                         response = requests.post(url, data=json.dumps(post_params), headers=headers, timeout=timeout)
-                        if alert_response.json() and not alert_response.json()['error']:
+                        if alert_response.json() and not alert_response.json().get('error'):
                             logging.info("Successfully executed at Zabbix.")
                             logging.debug("Zabbix response: " + str(response.json()))
                         else:
@@ -129,7 +129,7 @@ def main():
                     else:
                         logging.warning(LOG_PREFIX + "Cannot login to Zabbix!")
         else:
-            logging.warning("Alert with id [" + alert_id + "] does not exist in Opsgenie. It is probably deleted.")
+            logging.warning("Alert with id [" + str(alert_id) + "] does not exist in Opsgenie. It is probably deleted.")
     else:
         logging.warning("Alert id does not exist ")
 
