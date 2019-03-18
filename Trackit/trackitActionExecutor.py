@@ -17,8 +17,6 @@ args = vars(parser.parse_args())
 
 logging.basicConfig(stream=sys.stdout, level=args['logLevel'])
 
-logging.info("heyo: ")
-
 def parse_field(key, mandatory):
     variable = queue_message.get(key)
     if not variable:
