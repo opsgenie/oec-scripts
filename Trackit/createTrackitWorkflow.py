@@ -9,19 +9,19 @@ parser = argparse.ArgumentParser()
 parser.add_argument('-payload', '--queuePayload', help='Payload from queue', required=True)
 parser.add_argument('-apiKey', '--apiKey', help='The apiKey of the integration', required=True)
 parser.add_argument('-opsgenieUrl', '--opsgenieUrl', help='The url', required=True)
-parser.add_argument('-loglevel', '--loglevel', help='Log level', required=True)
+parser.add_argument('-logLevel', '--logLevel', help='Log level', required=True)
 parser.add_argument('-url', '--url', help='The url', required=False)
 parser.add_argument('-login', '--login', help='Login', required=False)
 parser.add_argument('-password', '--password', help='Password', required=False)
 args = vars(parser.parse_args())
 
-logging.basicConfig(stream=sys.stdout, level=args['loglevel'])
+logging.basicConfig(stream=sys.stdout, level=args['logLevel'])
 
 
 def parse_field(key, mandatory):
-    variable = queue_message[key]
-    if not variable.strip():
-        variable = args[key]
+    variable = queue_message.get(key)
+    if not variable:
+        variable = args.get(key)
     if mandatory and not variable:
         logging.error(LOG_PREFIX + " Skipping action, Mandatory conf item '" + key +
                       "' is missing. Check your configuration file.")
@@ -31,7 +31,7 @@ def parse_field(key, mandatory):
 
 
 def parse_timeout():
-    parsed_timeout = args['http.timeout']
+    parsed_timeout = args.get('http.timeout')
     if not parsed_timeout:
         return 30000
     return int(parsed_timeout)
@@ -80,9 +80,10 @@ def main():
             "Summary": alert['message'],
             "RequestorName": parse_field("login", True)
         }
+        create_url = str(url) + "/TrackitWeb/api/workorder/Create"
         logging.debug(
-            "Before Post -> Url: " + url + ", " + "Request Headers: " + headers + " Content: " + content_params)
-        response = requests.post(url, json.dumps(content_params), headers=headers, timeout=timeout)
+            "Before Post -> Url: " + create_url + ", " + "Request Headers: " + str(headers) + " Content: " + str(content_params))
+        response = requests.post(create_url, json.dumps(content_params), headers=headers, timeout=timeout)
         if response.status_code < 299:
             logging.info(LOG_PREFIX + " Successfully executed at TrackIt.")
             try:
@@ -90,7 +91,7 @@ def main():
                 if response_map:
                     flow_id = response_map['data']['data']['Id']
                     if flow_id:
-                        alert_api_url = args['opsgenieUrl'] + "/" + alert_id + "/details"
+                        alert_api_url = args['opsgenieUrl'] + "/v2/alerts/" + alert_id + "/details"
                         content = {
                             "details":
                                 {
@@ -107,19 +108,19 @@ def main():
                         if alert_response.status_code < 299:
                             logging.info(LOG_PREFIX + " Successfully sent to Opsgenie")
                             logging.debug(
-                                LOG_PREFIX + " Jira response: " + alert_response.content + " " + alert_response.status_code)
+                                LOG_PREFIX + " TrackIt response: " + str(alert_response.content) + " " + str(alert_response.status_code))
                         else:
                             logging.warning(
-                                LOG_PREFIX + " Could not execute at Opsgenie; response: " + alert_response.content + " status code: " + alert_response.status_code)
+                                LOG_PREFIX + " Could not execute at Opsgenie; response: " + str(alert_response.content) + " status code: " + str(alert_response.status_code))
                     else:
                         logging.warning(
                             LOG_PREFIX + " Flow Id does not exist.")
             except ValueError:
                 logging.error(
-                    LOG_PREFIX + " Response does not have flow Id variable, " + response.content + " " + response.status_code)
+                    LOG_PREFIX + " Response does not have flow Id variable, " + str(response.content) + " " + str(response.status_code))
         else:
             logging.warning(
-                LOG_PREFIX + " Could not execute at TrackIt; response: " + response.content + " " + response.status_code)
+                LOG_PREFIX + " Could not execute at TrackIt; response: " + str(response.content) + " " + str(response.status_code))
 
 
 if __name__ == '__main__':

@@ -9,19 +9,18 @@ parser = argparse.ArgumentParser()
 parser.add_argument('-payload', '--queuePayload', help='Payload from queue', required=True)
 parser.add_argument('-apiKey', '--apiKey', help='The apiKey of the integration', required=True)
 parser.add_argument('-opsgenieUrl', '--opsgenieUrl', help='The url', required=True)
-parser.add_argument('-loglevel', '--loglevel', help='Log level', required=True)
+parser.add_argument('-logLevel', '--logLevel', help='Log level', required=True)
 parser.add_argument('-url', '--url', help='The url', required=False)
 parser.add_argument('-login', '--login', help='Login', required=False)
 parser.add_argument('-password', '--password', help='Password', required=False)
 args = vars(parser.parse_args())
 
-logging.basicConfig(stream=sys.stdout, level=args['loglevel'])
-
+logging.basicConfig(stream=sys.stdout, level=args['logLevel'])
 
 def parse_field(key, mandatory):
-    variable = queue_message[key]
-    if not variable.strip():
-        variable = args[key]
+    variable = queue_message.get(key)
+    if not variable:
+        variable = args.get(key)
     if mandatory and not variable:
         logging.error(LOG_PREFIX + " Skipping action, Mandatory conf item '" + key +
                       "' is missing. Check your configuration file.")
@@ -31,26 +30,27 @@ def parse_field(key, mandatory):
 
 
 def parse_timeout():
-    parsed_timeout = args['http.timeout']
+    parsed_timeout = args.get('http.timeout')
     if not parsed_timeout:
         return 30000
     return int(parsed_timeout)
 
 
 def send_request_to_trackit(final_url, content, headers):
-    response = requests.post(final_url, content, headers=headers, timeout=timeout)
+    response = requests.post(final_url, json.dumps(content), headers=headers, timeout=timeout)
     if response.status_code < 299:
         logging.info(LOG_PREFIX + " Successfully executed at TrackIt.")
     else:
         logging.warning(
-            LOG_PREFIX + " Could not execute at TrackIt; response: " + response.content + " " + response.status_code)
+            LOG_PREFIX + " Could not execute at TrackIt; response: " + str(response.content) + " " + str(
+                response.status_code))
 
 
 def login_to_trackit():
     final_url = url + "/TrackitWeb/api/login?username=" + parse_field("login",
                                                                       True) + "&pwd=" + parse_field(
         "password", True)
-    logging.debug("Url: " + final_url)
+    logging.debug("Url: " + str(final_url))
     response = requests.get(final_url)
     if response:
         response_map = response.json()
@@ -71,7 +71,8 @@ def add_note_to_workflow(message, workflow_id, track_key):
         "IsPrivate": "False",
         "FullText": message
     }
-    logging.debug("Before Post -> Url: " + final_url + ", Content: " + str(content) + ", Request Headers: " + headers)
+    logging.debug(
+        "Before Post -> Url: " + final_url + ", Content: " + str(content) + ", Request Headers: " + str(headers))
     send_request_to_trackit(final_url, content, headers)
 
 
@@ -82,7 +83,7 @@ def close_workflow(workflow_id, track_key):
         "Accept": "text/json",
         "TrackitAPIKey": track_key
     }
-    logging.debug("Before Post -> Url: " + final_url + ", " + "Request Headers: " + headers)
+    logging.debug("Before Post -> Url: " + final_url + ", " + "Request Headers: " + str(headers))
     send_request_to_trackit(final_url, {}, headers)
 
 
@@ -102,29 +103,33 @@ def main():
 
     LOG_PREFIX = "[" + action + "]"
     logging.info("Will execute " + action + " for alertId " + alert_id)
-    url = parse_field(url, True)
+    url = parse_field("url", True)
     track_key = login_to_trackit()
-    workflow_id = alert["details"]["workflow_id"]
+    workflow_id = str(alert["details"]["workflow_id"])
+    user_name = str(alert['username'])
+    message = str(alert['message'])
 
     if workflow_id:
-        message = alert['userFullName'] + " executed [" + action + "] action on alert: \"" + alert['message'] + "\""
+        message = user_name + " executed [" + action + "] action on alert: \"" + message + "\""
 
         if action == "Acknowledge":
-            message = alert['userFullName'] + " acknowledged alert: \"" + alert['message'] + "\""
+            message = user_name + " acknowledged alert: \"" + message + "\""
         elif action == "AddNote":
-            message = alert.username + " noted: \"" + alert['note'] + "\" on alert: \"" + alert['message'] + "\""
+            note = str(alert['note'])
+            message = user_name + " noted: \"" + note + "\" on alert: \"" + message + "\""
         elif action == "AddRecipient":
-            message = alert[
-                          'userFullName'] + " added recipient " + alert['message'] + " to alert: \"" + alert[
-                          'message'] + "\""
+            recipient = str(alert['recipient'])
+            message = user_name + " added recipient " + recipient + " to alert: \"" + message + "\""
         elif action == "AddTeam":
-            message = alert['userFullName'] + " added team " + alert['team'] + " to alert: \"" + alert['message'] + "\""
+            team = str(alert['team'])
+            message = user_name + " added team " + team + " to alert: \"" + message + "\""
         elif action == "AssignOwnership":
-            message = alert['userFullName'] + " assigned ownership of the alert: \"" + alert['message'] + "\" to " + \
-                      alert[
-                          'owner']
+            owner = str(alert['owner'])
+            message = user_name + " assigned ownership of the alert: \"" + message + "\" to " + \
+                      owner
         elif action == "TakeOwnership":
-            message = alert['userFullName'] + " took ownership of the alert: \"" + alert['message'] + "\""
+            owner = str(alert['owner'])
+            message = user_name + " took ownership of the alert: \"" + message + "\""
 
         if action != "Close":
             add_note_to_workflow(message, workflow_id, track_key)
@@ -132,3 +137,5 @@ def main():
             close_workflow(workflow_id, track_key)
     else:
         logging.warning(LOG_PREFIX + " Cannot send action to Track-It because workflow_id is not found on alert")
+if __name__ == '__main__':
+    main()
