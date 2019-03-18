@@ -9,7 +9,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('-payload', '--queuePayload', help='Payload from queue', required=True)
 parser.add_argument('-apiKey', '--apiKey', help='The apiKey of the integration', required=True)
 parser.add_argument('-opsgenieUrl', '--opsgenieUrl', help='The url', required=True)
-parser.add_argument('-loglevel', '--loglevel', help='Level of log', required=True)
+parser.add_argument('-logLevel', '--logLevel', help='Level of log', required=True)
 parser.add_argument('-serverUrl', '--serverUrl', help='Solarwinds Server URL', required=True)
 parser.add_argument('-apiToken', '--apiToken', help='Api Token', required=True)
 parser.add_argument('-httpTimeout', '--httpTimeout', help='Timeout for http requests', required=False)
@@ -21,7 +21,7 @@ queue_message = json.loads(queue_message_string)
 CLOSE_STATUS_ID = 3
 ACKNOWLEDGED_STATUS_ID = 6
 
-logging.basicConfig(stream=sys.stdout, level=args['loglevel'])
+logging.basicConfig(stream=sys.stdout, level=args['logLevel'])
 
 
 def parse_field(key, mandatory):

@@ -13,7 +13,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('-payload', '--queuePayload', help='Payload from queue', required=True)
 parser.add_argument('-apiKey', '--apiKey', help='The apiKey of the integration', required=True)
 parser.add_argument('-opsgenieUrl', '--opsgenieUrl', help='The url', required=True)
-parser.add_argument('-loglevel', '--loglevel', help='Level of log', required=True)
+parser.add_argument('-logLevel', '--logLevel', help='Level of log', required=True)
 parser.add_argument('-api_url', '--api_url', help='Icinga Server URL', required=False)
 parser.add_argument('-graphite_url', '--graphite_url', help='Graphite URL', required=False)
 parser.add_argument('-user', '--user', help='User', required=True)
@@ -27,7 +27,7 @@ args = vars(parser.parse_args())
 queue_message_string = args['queuePayload']
 queue_message = json.loads(queue_message_string)
 
-logging.basicConfig(stream=sys.stdout, level=args['loglevel'])
+logging.basicConfig(stream=sys.stdout, level=args['logLevel'])
 
 
 def parse_field(key, mandatory):
@@ -49,12 +49,7 @@ def post_to_icingaApi(url_path, content_map):
     url = args["api_url"] + url_path
     logging.debug(LOG_PREFIX + " Posting to Icinga. Url " + url + ", content: " + str(content_map))
 
-    headers = {
-        "Content-Type": "application/json",
-        "Accept-Language": "application/json",
-    }
-
-    response = requests.post(url, json=content_map, headers=headers, timeout=HTTP_TIMEOUT, auth=auth_token)
+    response = requests.post(url, json=content_map, timeout=HTTP_TIMEOUT, auth=auth_token)
 
     if response.status_code == 200:
         logging.info(LOG_PREFIX + " Successfully executed at Icinga.")
@@ -182,8 +177,12 @@ def get_host_status_html():
     state = parse_from_details("host_state")
     last_check_time = parse_from_details("last_host_check")
     last_state_change = parse_from_details("last_host_state_change")
-    last_check_time = time.strftime(date_formatter, time.localtime(last_check_time))
-    last_state_change = time.strftime(date_formatter, time.localtime(last_state_change))
+
+    if last_check_time:
+        last_check_time = time.strftime(date_formatter, time.localtime(last_check_time))
+    if last_state_change:
+        last_state_change = time.strftime(date_formatter, time.localtime(last_state_change))
+
     host_alias_ = parse_from_details("host_alias")
     details_host_name_ = parse_from_details("host_name")
     host_duration_ = parse_from_details("host_duration")
@@ -298,7 +297,7 @@ def get_perf_data(is_service_alert):
         logging.info("Image received")
         return response.content
     else:
-        logging.error("Could not get image from url " + graphite_url + ". ResponseCode:" + code + " Reason:" + str(
+        logging.error("Could not get image from url " + graphite_url + ". ResponseCode:" + str(code) + " Reason:" + str(
             response.content))
         return None
 

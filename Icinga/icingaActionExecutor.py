@@ -22,6 +22,7 @@ parser.add_argument('-alert_histogram_image_url', '--alert_histogram_image_url',
 parser.add_argument('-user', '--user', help='User', required=True)
 parser.add_argument('-password', '--password', help='Password', required=True)
 parser.add_argument('-timeout', '--timeout', help='HTTP Timeout', required=False)
+parser.add_argument('-scheme', '--scheme', help='Icinga scheme', required=False)
 parser.add_argument('-expire_acknowledgement_after', '-expire_acknowledgement_after',
                     help='Removes acknowledgement after given value (in minutes.)', required=False)
 
@@ -99,8 +100,8 @@ def get_image(url):
         return response.content
     else:
         content = str(response.content)
-        logging.warning("Could not get image from url " + url + ". ResponseCode:" + code + " Reason:" + content)
-        print("Could not get image from url " + url + ". ResponseCode:" + code + " Reason:" + content)
+        logging.warning("Could not get image from url " + url + ". ResponseCode:" + str(code) + " Reason:" + content)
+        print("Could not get image from url " + url + ". ResponseCode:" + str(code) + " Reason:" + content)
         return None
 
 
@@ -117,8 +118,10 @@ def get_host_status_html():
     state = parse_from_details("host_state")
     last_check_time = parse_from_details("last_host_check")
     last_state_change = parse_from_details("last_host_state_change")
-    last_check_time = time.strftime(date_formatter, time.localtime(last_check_time))
-    last_state_change = time.strftime(date_formatter, time.localtime(last_state_change))
+    if last_check_time:
+        last_check_time = time.strftime(date_formatter, time.localtime(last_check_time))
+    if last_state_change:
+        last_state_change = time.strftime(date_formatter, time.localtime(last_state_change))
     host_alias_ = parse_from_details("host_alias")
     details_host_name_ = parse_from_details("host_name")
     host_duration_ = parse_from_details("host_duration")
@@ -286,7 +289,7 @@ def send_create_request():
 def post_to_icinga_api(post_params):
     url = get_url("command_url", "/icinga/cgi-bin/cmd.cgi")
     logging.debug(LOG_PREFIX + "Posting to Icinga. Url " + url + " params:" + str(post_params))
-    response = requests.post(url, json.dumps(post_params), timeout=HTTP_TIMEOUT, auth=auth_token)
+    response = requests.post(url, post_params, timeout=HTTP_TIMEOUT, auth=auth_token)
 
     if 200 <= response.status_code < 400:
         logging.info(LOG_PREFIX + " Successfully executed at Icinga.")
@@ -335,7 +338,7 @@ def send_take_ownership_request(post_params, service):
 
 
 def send_assign_ownership_request(post_params, service):
-    post_params['com_data'] = "alert ownership assigned to " + alert["username"]
+    post_params['com_data'] = "alert ownership assigned to " + alert["owner"]
     if service:
         post_params["cmd_typ"] = "3"
     else:
@@ -408,7 +411,7 @@ def main():
         elif action == "AssignOwnership":
             send_assign_ownership_request(postParams, service)
         elif action == "AddNote":
-            send_add_note_request(postParams)
+            send_add_note_request(postParams, service)
     else:
         logging.warning(
             LOG_PREFIX + " Alert with id " + alert["alertId"] + " does not exist in Opsgenie. It is probably deleted.")
