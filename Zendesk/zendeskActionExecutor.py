@@ -7,7 +7,7 @@ import requests
 from requests.auth import HTTPBasicAuth
 
 parser = argparse.ArgumentParser()
-parser.add_argument('-payload', '--queuePayload', help='Payload from queue', required=True)
+parser.add_argument('-payload', '--payload', help='Payload from queue', required=True)
 parser.add_argument('-apiKey', '--apiKey', help='The apiKey of the integration', required=True)
 parser.add_argument('-opsgenieUrl', '--opsgenieUrl', help='The url', required=True)
 parser.add_argument('-logLevel', '--logLevel', help='Log level', required=True)
