@@ -119,9 +119,9 @@ def get_host_status_html():
     last_check_time = parse_from_details("last_host_check")
     last_state_change = parse_from_details("last_host_state_change")
     if last_check_time:
-        last_check_time = time.strftime(date_formatter, time.localtime(last_check_time))
+        last_check_time = time.strftime(date_formatter, time.localtime(int(last_check_time)))
     if last_state_change:
-        last_state_change = time.strftime(date_formatter, time.localtime(last_state_change))
+        last_state_change = time.strftime(date_formatter, time.localtime(int(last_state_change)))
     host_alias_ = parse_from_details("host_alias")
     details_host_name_ = parse_from_details("host_name")
     host_duration_ = parse_from_details("host_duration")
@@ -169,9 +169,10 @@ def get_service_status_html():
     last_service_check = parse_from_details("last_service_check")
     last_state_change = parse_from_details("last_service_state_change")
     last_service_check = "" if not last_service_check.strip() else time.strftime(date_formatter,
-                                                                                 time.localtime(last_service_check))
+                                                                                 time.localtime(
+                                                                                     int(last_service_check)))
     last_state_change = "" if not last_state_change.strip() else time.strftime(date_formatter,
-                                                                               time.localtime(last_state_change))
+                                                                               time.localtime(int(last_state_change)))
     service = parse_from_details("service_desc")
     host_alias = parse_from_details("host_alias")
     host_name = parse_from_details("host_name")

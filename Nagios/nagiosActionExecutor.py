@@ -14,7 +14,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('-payload', '--payload', help='Payload from queue', required=True)
 parser.add_argument('-apiKey', '--apiKey', help='The apiKey of the integration', required=True)
 parser.add_argument('-opsgenieUrl', '--opsgenieUrl', help='The url', required=True)
-parser.add_argument('-loglevel', '--loglevel', help='Level of log', required=True)
+parser.add_argument('-logLevel', '--logLevel', help='Level of log', required=True)
 parser.add_argument('-alert_histogram_image_url', '--alert_histogram_image_url', help='Alert Histogram Image Url',
                     required=False)
 parser.add_argument('-trends_image_url', '--trends_image_url', help='Trends Image Url',
@@ -29,7 +29,7 @@ parser.add_argument('-host', '--host', help='Host', required=False)
 
 args = vars(parser.parse_args())
 
-logging.basicConfig(stream=sys.stdout, level=args['loglevel'])
+logging.basicConfig(stream=sys.stdout, level=args['logLevel'])
 
 queue_message_string = args['payload']
 queue_message = json.loads(queue_message_string)
@@ -107,8 +107,10 @@ def get_host_status_html():
     state = parse_from_details("host_state")
     last_check_time = parse_from_details("last_host_check")
     last_state_change = parse_from_details("last_host_state_change")
-    last_check_time = time.strftime(date_formatter, time.localtime(last_check_time))
-    last_state_change = time.strftime(date_formatter, time.localtime(last_state_change))
+    if last_check_time:
+        last_check_time = time.strftime(date_formatter, time.localtime(int(last_check_time)))
+    if last_state_change:
+        last_state_change = time.strftime(date_formatter, time.localtime(int(last_state_change)))
     host_alias_ = parse_from_details("host_alias")
     details_host_name_ = parse_from_details("host_name")
     host_duration_ = parse_from_details("host_duration")
@@ -156,9 +158,10 @@ def get_service_status_html():
     last_service_check = parse_from_details("last_service_check")
     last_state_change = parse_from_details("last_service_state_change")
     last_service_check = "" if not last_service_check.strip() else time.strftime(date_formatter,
-                                                                                 time.localtime(last_service_check))
+                                                                                 time.localtime(
+                                                                                     int(last_service_check)))
     last_state_change = "" if not last_state_change.strip() else time.strftime(date_formatter,
-                                                                               time.localtime(last_state_change))
+                                                                               time.localtime(int(last_state_change)))
     service = parse_from_details("service_desc")
     host_alias = parse_from_details("host_alias")
     host_name = parse_from_details("host_name")
@@ -279,7 +282,7 @@ def attach(entity):
 def post_to_nagios(post_params):
     url = get_url("command_url", "/nagios/cgi-bin/cmd.cgi")
     logging.debug(LOG_PREFIX + "Posting to Nagios. Url " + url + " params:" + str(post_params))
-    response = requests.post(url, json.dumps(post_params), timeout=timeout, auth=auth_token)
+    response = requests.post(url, post_params, timeout=timeout, auth=auth_token)
 
     if response.status_code < 400:
         logging.info(LOG_PREFIX + " Successfully executed at Nagios.")
@@ -343,9 +346,9 @@ def main():
 
         if action == "Create":
             if service:
-                attach(service)
+                attach("service")
             else:
-                attach(host)
+                attach("host")
             discard_action = True
         elif action == "Acknowledge":
             if source and source["name"].lower().startswith("nagios"):
@@ -374,7 +377,7 @@ def main():
             else:
                 post_params["cmd_typ"] = "1"
         elif action == "AssignOwnership":
-            post_params['com_data'] = "alert ownership assigned to " + alert["username"]
+            post_params['com_data'] = "alert ownership assigned to " + alert["owner"]
             if service:
                 post_params["cmd_typ"] = "3"
             else:
