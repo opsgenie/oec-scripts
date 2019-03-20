@@ -7,10 +7,10 @@ from xml.etree import ElementTree
 import requests
 
 parser = argparse.ArgumentParser()
-parser.add_argument('-queuePayload', '--queuePayload', help='Payload from queue', required=True)
+parser.add_argument('-payload', '--queuePayload', help='Payload from queue', required=True)
 parser.add_argument('-apiKey', '--apiKey', help='The apiKey of the integration', required=True)
 parser.add_argument('-opsgenieUrl', '--opsgenieUrl', help='The url', required=True)
-parser.add_argument('-loglevel', '--loglevel', help='Level of log', required=True)
+parser.add_argument('-logLevel', '--logLevel', help='Level of log', required=True)
 parser.add_argument('-url', '--url', help='Url', required=False)
 parser.add_argument('-username', '--username', help='Username', required=False)
 parser.add_argument('-password', '--password', help='Password', required=False)
@@ -22,7 +22,7 @@ args = vars(parser.parse_args())
 queue_message_string = args['queuePayload']
 queue_message = json.loads(queue_message_string)
 
-logging.basicConfig(stream=sys.stdout, level=args['loglevel'])
+logging.basicConfig(stream=sys.stdout, level=args['logLevel'])
 
 
 def add_details(issue_number, alert_id):
@@ -37,9 +37,9 @@ def add_details(issue_number, alert_id):
             'issueType': 'Problem'
         }
     }
-    r = requests.post(endpoint, data=body, headers=headers)
-    logging.debug(LOG_PREFIX + 'Add details result ' + r.content + ' Status code: ' + r.status_code +
-                  ("Reason: " + r.reason) if r.reason else "")
+    r = requests.post(endpoint, json=body, headers=headers)
+    logging.debug(LOG_PREFIX + 'Add details result ' + str(r.content) + ' Status code: ' + str(r.status_code) +
+                  ("Reason: " + str(r.reason)) if r.reason else "")
 
 
 def create_issue(url, username, password, alert_alias, priority, description, title, identifier_id):
@@ -80,8 +80,12 @@ def create_issue(url, username, password, alert_alias, priority, description, ti
     logging.debug("Response from BMC FootPrints v11 Web Service API: " + str(response.content) + " Response Code: "
                   + str(response.status_code) + (" Reason: " + str(response.reason)) if response.reason else "")
 
-    root = ElementTree.fromstring(response.content)
-    return root.findall('MRWebServices__createIssueResponse')[0].findall('return')[0].text  # todo not tested
+    tree = ElementTree.fromstring(response.content)
+
+    for item in tree.getiterator():
+        if item.tag == 'return':
+            return item.text
+    return ""
 
 
 def update_issue_description(url, username, password, description, identifier_id, issue_number):
@@ -224,18 +228,25 @@ def convert_priority(priority):
     return '3'
 
 
+def parse_from_queue_message(key):
+    if key in queue_message.keys():
+        return queue_message[key]
+    return ""
+
+
 def main():
     global LOG_PREFIX
     global BMC_FOOTPRINTS_WEB_SERVICE_EXTENSION
+    print("QUEUE: " + queue_message_string)
 
     alert_id = queue_message['alert']['alertId']
-    mapped_action = queue_message['mappedAction']['name']
-    issue_number = queue_message['issueNumber']
-    title = queue_message['title']
-    description = queue_message['description']
-    priority = queue_message['priority']
-    issue_type = queue_message['issueType']
-    alert_alias = queue_message['alertAlias']
+    mapped_action = queue_message['params']['mappedActionV2']['name']
+    issue_number = parse_from_queue_message('issueNumber')
+    title = parse_from_queue_message('title')
+    description = parse_from_queue_message('description')
+    priority = parse_from_queue_message('priority')
+    issue_type = parse_from_queue_message('issueType')
+    alert_alias = parse_from_queue_message('alertAlias')
 
     BMC_FOOTPRINTS_WEB_SERVICE_EXTENSION = '/MRcgi/MRWebServices.pl'
     LOG_PREFIX = '[' + mapped_action + ']'

@@ -38,7 +38,7 @@ def add_details(ticket_id, ticket_type, alert_id):
             'ticketType': ticket_type
         }
     }
-    r = requests.post(endpoint, data=body, headers=headers)
+    r = requests.post(endpoint, json=body, headers=headers)
     logging.debug(LOG_PREFIX + 'Add details result ' + r.content + ' Status code: ' + r.status_code +
                   ("Reason: " + r.reason) if r.reason else "")
 
@@ -175,8 +175,11 @@ def create_ticket(item_definition_id, short_description, description, priority, 
     logging.debug("Response from BMC FootPrints v12 Web Service API: " + str(response.content) + " Response Code: "
                   + str(response.status_code) + (" Reason: " + str(response.reason)) if response.reason else "")
 
-    root = ElementTree.fromstring(response.content)
-    return root.findall('createTicketResponse')[0].findall('return')[0]
+    tree = ElementTree.fromstring(response.content)
+    for item in tree.getiterator():
+        if item.tag == 'return':
+            return item.text
+    return ""
 
 
 def update_ticket_description(ticket_definition_id, ticket_id, new_description, url, auth):
