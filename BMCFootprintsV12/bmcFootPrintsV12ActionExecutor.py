@@ -9,10 +9,10 @@ import requests
 from requests.auth import HTTPBasicAuth
 
 parser = argparse.ArgumentParser()
-parser.add_argument('-queuePayload', '--queuePayload', help='Payload from queue', required=True)
+parser.add_argument('-payload', '--queuePayload', help='Payload from queue', required=True)
 parser.add_argument('-apiKey', '--apiKey', help='The apiKey of the integration', required=True)
 parser.add_argument('-opsgenieUrl', '--opsgenieUrl', help='The url', required=True)
-parser.add_argument('-loglevel', '--loglevel', help='Level of log', required=True)
+parser.add_argument('-logLevel', '--logLevel', help='Level of log', required=True)
 parser.add_argument('-url', '--url', help='Url', required=False)
 parser.add_argument('-username', '--username', help='Username', required=False)
 parser.add_argument('-password', '--password', help='Password', required=False)
@@ -23,7 +23,7 @@ args = vars(parser.parse_args())
 queue_message_string = args['queuePayload']
 queue_message = json.loads(queue_message_string)
 
-logging.basicConfig(stream=sys.stdout, level=args['loglevel'])
+logging.basicConfig(stream=sys.stdout, level=args['logLevel'])
 
 
 def add_details(ticket_id, ticket_type, alert_id):
@@ -39,8 +39,8 @@ def add_details(ticket_id, ticket_type, alert_id):
         }
     }
     r = requests.post(endpoint, json=body, headers=headers)
-    logging.debug(LOG_PREFIX + 'Add details result ' + r.content + ' Status code: ' + r.status_code +
-                  ("Reason: " + r.reason) if r.reason else "")
+    logging.debug(LOG_PREFIX + 'Add details result ' + str(r.content) + ' Status code: ' + str(r.status_code) +
+                  ("Reason: " + str(r.reason)) if r.reason else "")
 
 
 def parse_field(key, mandatory):
@@ -79,7 +79,9 @@ def get_workspace_id(workspace_name, url, auth):
                   + str(response.status_code) + (" Reason: " + str(response.reason)) if response.reason else "")
 
     root = ElementTree.fromstring(response.content)
-    definitions = root.findall('listContainerDefinitionsResponse')[0].findall('return')[0].findall('_definitions')
+    ns = {'ns1': 'http://externalapi.business.footprints.numarasoftware.com/'}
+    listContainerDefinitionsResponse = root.findall(".//ns1:listContainerDefinitionsResponse", ns)
+    definitions = listContainerDefinitionsResponse[0].findall('return')[0].findall('_definitions')
     for d in definitions:
         if d.find('_definitionName').text == workspace_name:
             return d.find('_definitionId').text
@@ -111,7 +113,9 @@ def get_item_definition_id(workspace_id, item_type, url, auth):
                   + str(response.status_code) + (" Reason: " + str(response.reason)) if response.reason else "")
 
     root = ElementTree.fromstring(response.content)
-    definitions = root.findall('listItemDefinitionsResponse')[0].findall('return')[0].findall('_definitions')
+    ns = {'ns1': 'http://externalapi.business.footprints.numarasoftware.com/'}
+    listItemDefinitionsResponse: object = root.findall(".//ns1:listItemDefinitionsResponse", ns)
+    definitions = listItemDefinitionsResponse[0].findall('return')[0].findall('_definitions')
     for d in definitions:
         if d.find('_definitionName').text == item_type:
             return d.find('_definitionId').text
@@ -318,18 +322,25 @@ def convert_priority(priority):
     return "3-Medium"
 
 
+def parse_from_queue_message(key):
+    if key in queue_message.keys():
+        return queue_message[key]
+    return ""
+
+
 def main():
     global LOG_PREFIX
     global BMC_FOOTPRINTS_WEB_SERVICE_EXTENSION
 
+    logging.debug("QUEUE MESSAGE: "+ queue_message_string)
     alert_id = queue_message['alert']['alertId']
-    mapped_action = queue_message['mappedAction']['name']
-    ticket_id = queue_message['ticketId']
-    short_description = queue_message['short_description']
-    description = queue_message['description']
-    priority = queue_message['priority']
-    ticket_type = queue_message['ticketType']
-    alert_alias = queue_message['alertAlias']
+    mapped_action = queue_message['params']['mappedActionV2']['name']
+    ticket_id = parse_from_queue_message('ticketId')
+    short_description = parse_from_queue_message('short_description')
+    description = parse_from_queue_message('description')
+    priority = parse_from_queue_message('priority')
+    ticket_type = parse_from_queue_message('ticketType')
+    alert_alias = parse_from_queue_message('alertAlias')
 
     BMC_FOOTPRINTS_WEB_SERVICE_EXTENSION = '/footprints/servicedesk/externalapisoap/ExternalApiServicePort?wsdl'
     LOG_PREFIX = '[' + mapped_action + ']'
@@ -350,13 +361,16 @@ def main():
     if not workspace_id:
         logging.error(LOG_PREFIX + 'Cannot obtain workspace ID from BMC FootPrints v12.')
         return
-    item_definition_id = get_item_definition_id(workspace_id, ticket_type, url, auth)
-    if not item_definition_id:
-        logging.error(LOG_PREFIX + 'Cannot obtain item definition ID for ' + ticket_type +
-                      ' from BMC FootPrints v12.')
-        return
+
     if mapped_action == 'createIncident' or mapped_action == 'createProblem':
         ticket_type = 'Incident' if mapped_action == 'createIncident' else 'Problem'
+
+        item_definition_id = get_item_definition_id(workspace_id, ticket_type, url, auth)
+        if not item_definition_id:
+            logging.error(LOG_PREFIX + 'Cannot obtain item definition ID for ' + ticket_type +
+                          ' from BMC FootPrints v12.')
+            return
+
         item_id = create_ticket(item_definition_id, short_description, description, priority, alert_alias,
                                 ticket_type, url, auth)
         if not item_id:
@@ -364,14 +378,21 @@ def main():
                           ' from BMC FootPrints v12.')
             return
         add_details(item_id, ticket_type, alert_id)
-    elif mapped_action == 'updateDescription':
-        update_ticket_description(item_definition_id, ticket_id, description, url, auth)
-    elif mapped_action == 'updatePriority':
-        update_ticket_priority(item_definition_id, ticket_id, description, priority, url, auth)
-    elif mapped_action == 'resolveTicket':
-        resolve_ticket(item_definition_id, ticket_id, description, url, auth)
     else:
-        logging.warning(LOG_PREFIX + "Skipping" + mapped_action + "action, could not determine the mapped action.")
+        item_definition_id = get_item_definition_id(workspace_id, ticket_type, url, auth)
+        if not item_definition_id:
+            logging.error(LOG_PREFIX + 'Cannot obtain item definition ID for ' + ticket_type +
+                          ' from BMC FootPrints v12.')
+            return
+
+        elif mapped_action == 'updateDescription':
+            update_ticket_description(item_definition_id, ticket_id, description, url, auth)
+        elif mapped_action == 'updatePriority':
+            update_ticket_priority(item_definition_id, ticket_id, description, priority, url, auth)
+        elif mapped_action == 'resolveTicket':
+            resolve_ticket(item_definition_id, ticket_id, description, url, auth)
+        else:
+            logging.warning(LOG_PREFIX + "Skipping" + mapped_action + "action, could not determine the mapped action.")
 
 
 if __name__ == '__main__':
