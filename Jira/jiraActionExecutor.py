@@ -85,7 +85,7 @@ def main():
     username = parse_field('username', True)
     password = parse_field('password', True)
     project_key = parse_field('projectKey', False)
-    issue_type_name = parse_field('issueType', False)
+    issue_type_name = parse_field('issueTypeName', False)
 
     issue_key = queue_message.get("key")
 
