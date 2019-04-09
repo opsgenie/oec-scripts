@@ -1,0 +1,83 @@
+{
+  "apiKey": "<API_KEY>",
+  "baseUrl": "https://api.opsgenie.com",
+  "logLevel": "DEBUG",
+  "globalArgs": [
+    "<list_of_args_you_want_to_pass_to_the_scripts>"
+  ],
+  "globalFlags": {
+    "alert_histogram_image_url": "http://localhost/nagiosxi/includes/components/nagioscore/ui/histogram.php",
+    "trends_image_url": "http://localhost/nagiosxi/includes/components/nagioscore/ui/trends.php",
+    "command_url": "http://localhost/nagiosxi/includes/components/nagioscore/ui/cmd.php",
+    "user": "nagiosadmin",
+    "ticket": "<your_ticket>"
+  },
+  "actionMappings": {
+    "Create": {
+      "filepath": "<path_of_script>",
+      "sourceType": "<local | git>",
+      "environmentVariables": [
+        "e1=v1",
+        "e2=v2"
+      ],
+      "stdout": "<path_of_output_file_of_script>"
+    },
+    "Acknowledge": {
+      "filepath": "<path_of_script>",
+      "sourceType": "<local | git>",
+      "environmentVariables": [
+        "e1=v1",
+        "e2=v2"
+      ],
+      "stdout": "<path_of_output_file_of_script>"
+    },
+    "AddNote": {
+      "filepath": "<path_of_script>",
+      "sourceType": "<local | git>",
+      "environmentVariables": [
+        "e1=v1",
+        "e2=v2"
+      ],
+      "stdout": "<path_of_output_file_of_script>"
+    },
+    "TakeOwnership": {
+      "filepath": "<path_of_script>",
+      "sourceType": "<local | git>",
+      "environmentVariables": [
+        "e1=v1",
+        "e2=v2"
+      ],
+      "stdout": "<path_of_output_file_of_script>"
+    },
+    "AssignOwnership": {
+      "filepath": "<path_of_script>",
+      "sourceType": "<local | git>",
+      "environmentVariables": [
+        "e1=v1",
+        "e2=v2"
+      ],
+      "stdout": "<path_of_output_file_of_script>"
+    },
+    "UnAcknowledge": {
+      "filepath": "<path_of_script>",
+      "sourceType": "<local | git>",
+      "environmentVariables": [
+        "e1=v1",
+        "e2=v2"
+      ],
+      "stdout": "<path_of_output_file_of_script>"
+    }
+  },
+  "pollerConf": {
+    "pollingWaitIntervalInMillis": 100,
+    "visibilityTimeoutInSec": 30,
+    "maxNumberOfMessages": 10
+  },
+  "poolConf": {
+    "maxNumberOfWorker": 12,
+    "minNumberOfWorker": 4,
+    "monitoringPeriodInMillis": 15000,
+    "keepAliveTimeInMillis": 6000,
+    "queueSize": 0
+  }
+}

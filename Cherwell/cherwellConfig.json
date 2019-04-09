@@ -1,0 +1,64 @@
+{
+  "apiKey": "<API_KEY>",
+  "baseUrl": "https://api.opsgenie.com",
+  "logLevel": "DEBUG",
+  "globalArgs": [
+    "<list_of_args_you_want_to_pass_to_the_scripts>"
+  ],
+  "globalFlags": {
+    "username": "<username>",
+    "password": "<password>",
+    "clientId": "<client_id>",
+    "apiUrl": "<api_url>"
+  },
+  "actionMappings": {
+    "addJournal": {
+      "filepath": "<path_of_script>",
+      "sourceType": "<local | git>",
+      "environmentVariables": [
+        "e1=v1",
+        "e2=v2"
+      ],
+      "stdout": "<path_of_output_file_of_script>"
+    },
+    "createIncident": {
+      "filepath": "<path_of_script>",
+      "sourceType": "<local | git>",
+      "environmentVariables": [
+        "e1=v1",
+        "e2=v2"
+      ],
+      "stdout": "<path_of_output_file_of_script>"
+    },
+    "inProgressIncident": {
+      "filepath": "<path_of_script>",
+      "sourceType": "<local | git>",
+      "environmentVariables": [
+        "e1=v1",
+        "e2=v2"
+      ],
+      "stdout": "<path_of_output_file_of_script>"
+    },
+    "resolveIncident": {
+      "filepath": "<path_of_script>",
+      "sourceType": "<local | git>",
+      "environmentVariables": [
+        "e1=v1",
+        "e2=v2"
+      ],
+      "stdout": "<path_of_output_file_of_script>"
+    }
+  },
+  "pollerConf": {
+    "pollingWaitIntervalInMillis": 100,
+    "visibilityTimeoutInSec": 30,
+    "maxNumberOfMessages": 10
+  },
+  "poolConf": {
+    "maxNumberOfWorker": 12,
+    "minNumberOfWorker": 4,
+    "monitoringPeriodInMillis": 15000,
+    "keepAliveTimeInMillis": 6000,
+    "queueSize": 0
+  }
+}
