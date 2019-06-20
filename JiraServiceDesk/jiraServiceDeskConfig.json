@@ -10,7 +10,7 @@
     "username": "<username>",
     "password": "<password>",
     "issueTypeName": "<issue_type_name>",
-    "key": "<key_of_project>"
+    "projectKey": "<key_of_project>"
   },
   "actionMappings": {
     "createIssue": {
