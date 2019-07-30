@@ -18,7 +18,7 @@ parser.add_argument('-projectKey', '--projectKey', help='Project key', required=
 parser.add_argument('-issueTypeName', '--issueTypeName', help='Issue Type', required=False)
 args = vars(parser.parse_args())
 
-logging.basicConfig(stream=sys.stdout, level=args['loglevel'])
+logging.basicConfig(stream=sys.stdout, level=args['logLevel'])
 
 
 def parse_field(key, mandatory):
