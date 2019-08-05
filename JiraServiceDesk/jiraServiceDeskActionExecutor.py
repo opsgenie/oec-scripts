@@ -14,7 +14,7 @@ parser.add_argument('-logLevel', '--logLevel', help='Level of log', required=Tru
 parser.add_argument('-url', '--url', help='URL', required=False)
 parser.add_argument('-username', '--username', help='Username', required=False)
 parser.add_argument('-password', '--password', help='Password', required=False)
-parser.add_argument('-projectKey', '--projectKey', help='Project key', required=False)
+parser.add_argument('-key', '--key', help='Project key', required=False)
 parser.add_argument('-issueTypeName', '--issueTypeName', help='Issue Type', required=False)
 args = vars(parser.parse_args())
 
@@ -23,7 +23,7 @@ logging.basicConfig(stream=sys.stdout, level=args['logLevel'])
 
 def parse_field(key, mandatory):
     variable = queue_message.get(key)
-    if not variable.strip():
+    if not variable:
         variable = args.get(key)
     if mandatory and not variable:
         logging.error(LOG_PREFIX + " Skipping action, Mandatory conf item '" + key +
@@ -71,6 +71,8 @@ def main():
     queue_message_string = args['queuePayload']
     queue_message = json.loads(queue_message_string)
 
+    logging.debug(str(queue_message))
+
     alert_id = queue_message["alert"]["alertId"]
     mapped_action = queue_message["mappedActionV2"]["name"]
 
@@ -81,10 +83,10 @@ def main():
     url = parse_field('url', True)
     username = parse_field('username', True)
     password = parse_field('password', True)
-    project_key = parse_field('projectKey', False)
+    project_key = parse_field('key', False)
     issue_type_name = parse_field('issueTypeName', False)
 
-    issue_key = queue_message.get("key")
+    issue_key = queue_message.get("IssueKey")
 
     logging.debug("Url: " + str(url))
     logging.debug("Username: " + str(username))
@@ -102,13 +104,13 @@ def main():
 
     result_url = url + "/rest/api/2/issue"
 
-    if mapped_action == "addCommentToIssue":
+    if mapped_action == "addComment":
         content_params = {
             "body": queue_message.get('body')
         }
-        result_url += "/" + issue_key + "/comment"
+        result_url += "/" + str(issue_key) + "/comment"
     elif mapped_action == "createIssue":
-        toLabel = "ogAlias:" + queue_message.get("alias")
+        toLabel = queue_message.get("alias")
         content_params = {
             "fields": {
                 "project": {
@@ -123,7 +125,7 @@ def main():
             }
         }
     elif mapped_action == "resolveIssue":
-        result_url += "/" + issue_key + "/transitions"
+        result_url += "/" + str(issue_key) + "/transitions"
         content_params = {
             "transition": {
                 "id": get_transition_id(headers, result_url, "Resolved", token)
@@ -135,6 +137,7 @@ def main():
             }
         }
 
+    logging.debug(str(content_params))    
     response = requests.post(result_url, data=json.dumps(content_params), headers=headers, auth=token, timeout=timeout)
     if response.status_code < 299:
         logging.info("Successfully executed at Jira Service Desk")
