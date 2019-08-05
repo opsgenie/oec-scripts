@@ -15,7 +15,7 @@ parser.add_argument('-username', '--username', help='Username', required=False)
 parser.add_argument('-password', '--password', help='Password', required=False)
 parser.add_argument('-url', '--url', help='URL', required=False)
 parser.add_argument('-projectKey', '--projectKey', help='Project Key', required=False)
-parser.add_argument('-issueType', '--issueType', help='Issue Type', required=False)
+parser.add_argument('-issueTypeName', '--issueTypeName', help='Issue Type', required=False)
 args = vars(parser.parse_args())
 
 logging.basicConfig(stream=sys.stdout, level=args['logLevel'])
