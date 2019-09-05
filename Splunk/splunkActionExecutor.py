@@ -16,7 +16,6 @@ def main():
     parser.add_argument("-logLevel", "--logLevel",
                         help="Level of logging", required=True)
 
-    print(list(sys.argv))
     args = vars(parser.parse_args())
 
     logging.basicConfig(stream=sys.stdout, level=args["logLevel"])
