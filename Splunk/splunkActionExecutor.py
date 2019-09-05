@@ -33,6 +33,9 @@ def main():
     splunkUrl = queue_message["url"]
     splunkToken = queue_message["token"]
 
+    del queue_message["url"]
+    del queue_message["token"]
+
     headers = {
         "Content-Type": "application/json",
         "Authorization": "Splunk {}".format(splunkToken)
