@@ -129,7 +129,7 @@ def main():
         result_url += "/" + issue_key + "/transitions"
         content_params = {
             "transition": {
-                "id": get_transition_id(headers, result_url, "Resolved")
+                "id": get_transition_id(headers, result_url, "Resolved", token)
             },
             "fields": {
                 "resolution": {
