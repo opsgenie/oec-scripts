@@ -52,7 +52,7 @@ def post_to_op5(post_params, typeOfNotification):
     token = HTTPBasicAuth(username, password)
 
     logging.debug(LOG_PREFIX + " Posting to OP5. Url: " + str(url) + " params: " + str(post_params))
-    response = requests.post(url, data=json.dumps(post_params), auth=token, timeout=parse_timeout())
+    response = requests.post(url, data=post_params, auth=token, timeout=parse_timeout())
     if response and response.status_code == 200:
         logging.info(LOG_PREFIX + " Successfully executed at OP5.")
         logging.debug(LOG_PREFIX + " OP5 response: " + str(response.content))
