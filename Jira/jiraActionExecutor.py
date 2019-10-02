@@ -204,7 +204,7 @@ def main():
                     logging.warning(
                         LOG_PREFIX + " Jira response is empty")
             except ValueError:
-                logging.error()
+                logging.error(ValueError)
     else:
         logging.warning(
             LOG_PREFIX + " Could not execute at Jira; response: " + str(response.content) + " status code: " + str(
