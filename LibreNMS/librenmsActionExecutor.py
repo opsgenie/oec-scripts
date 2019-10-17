@@ -45,8 +45,8 @@ if url.endswith("/") and len(url) >= 2:
     url = url[0:len(url) - 2]
 
 api_token = parse_field('apiToken', True)
-rule = queue_message["rule"]
-device_id = queue_message["device_id"]
+rule = int(queue_message["rule"])
+device_id = int(queue_message["deviceId"])
 timestamp = queue_message["timestamp"]
 timeout = args.get('timeout')
 if timeout is None:
@@ -70,21 +70,21 @@ logging.debug("Response from " + str(list_rules_endpoint) + ": " + str(list_rule
               + str(list_rules_response.status_code))
 
 if list_rules_response.status_code < 400:
-    list_rules_response_map = list_rules_response.json()
-    rules = list_rules_response_map["rules"]
+    rules = list_rules_response.json()["rules"]
+    rule_id = None
 
-    rule_id = next(
-        v["id"] for (k, v) in rules.items() if v["rule"] and v["rule"].strip().replace("\\\"", "\"") == rule.strip())
+    rule_list = [x["id"] for x in rules if x["id"] == rule]
+    for x in rule_list:
+        logging.debug(x)
 
-    logging.debug("Rule Id from LibreNMS: " + str(rule_id))
+    if len(rule_list) > 0:
+        rule_id = rule_list[0]
+        logging.debug("Rule Id from LibreNMS: " + str(rule_id))
 
-    if rule_id is not None:
         list_alerts_endpoint = url + "/api/v0/alerts"
-
         list_alerts_response = None
 
         if mapped_action == "ackAlert":
-
             query_params = {"state": "1"}
             logging.debug("Sending GET request to " + str(list_alerts_endpoint) + "with parameters: "
                           + json.dumps(query_params))
@@ -92,7 +92,6 @@ if list_rules_response.status_code < 400:
                                                 timeout=timeout)
 
         elif mapped_action == "unmuteAlert":
-
             query_params = {"state": "2"}
             logging.debug("Sending GET request to " + str(list_alerts_endpoint) + "with parameters: "
                           + json.dumps(query_params))
@@ -104,48 +103,33 @@ if list_rules_response.status_code < 400:
             + str(list_alerts_response.status_code))
 
         if list_alerts_response.status_code < 400:
+            alerts = list_alerts_response.json()['alerts']
+            alert_id = None
 
-            list_alerts_response_map = list_alerts_response.json()
-            alerts = list_alerts_response_map['alerts']
-            alert_id = str()
-
-            if alerts:
-
-                alerts = {key: value for (key, value) in alerts.items() if value.get("rule_id") == rule_id and
-                          value.get("device_id") == device_id}
-
-                if alerts and len(alerts) > 1:
-
-                    timestamp_filtered_alerts = {key: value for (key, value) in alerts.items() if
-                                                 value["timestamp"] == timestamp}
-
-                    if timestamp_filtered_alerts and len(timestamp_filtered_alerts) > 0:
-                        alert_id = timestamp_filtered_alerts[0]['id']
-                        logging.debug(
-                            "Found alert that matches the timestamp from Opsgenie alert, using that alert's alert id.")
-                    else:
-                        alert_id = alerts[0]['id']
-                        logging.debug("Timestamp did not match the timestamp retrieved from Opsgenie alert,"
-                                      + " using that alert ID of the first alert matches the rule and the device id.")
-
-                else:
-                    alert_id = alerts[0]['id']
+            if len(alerts) > 0:
+                alert_list = [x['id'] for x in alerts if (x['rule_id'] == rule and x['device_id'] == device_id and
+                                                          x['timestamp'] == timestamp)]
+                if len(alert_list) > 0:
+                    alert_id = alert_list[0]
+                    logging.debug("Alert ID: " + str(alert_id))
                     logging.debug(
-                        "Found only one alert from the LibreNMS API response, using the alert ID of that alert.")
-
-
+                            "Found alert that matches the timestamp from Opsgenie alert, using that alert's alert id.")
+                else:
+                    alert_list = [x['id'] for x in alerts if (x['rule_id'] == rule and x['device_id'] == device_id)]
+                    logging.debug("Timestamp did not match the timestamp retrieved from Opsgenie alert,"
+                                  + " using that alert ID of the first alert matches the rule and the device id.")
+                    alert_id = alert_list[0]
+                    logging.debug("Alert ID: " + str(alert_id))
             else:
                 logging.error(
-                    LOG_PREFIX + " Could not obtain alerts list from the list alerts response from LibreNMS API or found no matchin alerts.")
+                    LOG_PREFIX + " Could not obtain alerts list from the list alerts response from LibreNMS API or found no matching alerts.")
 
             logging.debug("Alert Id from LibreNMS: " + str(alert_id))
-
             if alert_id is not None:
-
                 if mapped_action == "ackAlert":
-                    url = url + "/api/v0/alerts/" + alert_id
+                    url = url + "/api/v0/alerts/" + str(alert_id)
                 elif mapped_action == "unmuteAlert":
-                    url = url + "/api/v0/alerts/unmute/" + alert_id
+                    url = url + "/api/v0/alerts/unmute/" + str(alert_id)
 
                 logging.debug("Sending PUT request to " + str(url))
 
@@ -173,3 +157,4 @@ else:
     logging.error(
         LOG_PREFIX + " Could not get rules list from LibreNMS; response: " + str(
             list_rules_response.status_code) + ' ' + str(list_rules_response.text))
+
