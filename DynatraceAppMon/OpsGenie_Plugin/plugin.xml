@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.2"?>
+<!-- plugin.xml file written by Dynatrace Client 7.0.0 -->
+<plugin>
+    <extension point="com.dynatrace.diagnostics.pdk.pluginconfig" id="com.opsgenie.plugin" name="OpsGenie Plugin">
+        <information>
+            <category value=""/>
+            <displayname value="Dynatrace OpsGenie Plugin"/>
+            <description value="Forwards Dynatrace AppMon incidents to OpsGenie."/>
+        </information>
+        <configuration>
+            <property key="url" label="Webhook URL" type="url" description="My property description ..." default=""/>
+            <property key="teams" label="Teams" type="string" description="My property description ..."
+                      default="default" multiline="false"/>
+        </configuration>
+    </extension>
+    <extension point="com.dynatrace.diagnostics.pdk.action" id="com.opsgenie.plugin.action"
+               name="OpsGenie Plugin Action">
+        <plugin configid="com.opsgenie.plugin" class="com.dynatrace.opsgenie.OpsGeniePlugin"/>
+    </extension>
+</plugin>
