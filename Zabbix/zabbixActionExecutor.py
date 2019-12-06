@@ -90,7 +90,7 @@ def main():
     logging.debug("Action: " + str(action))
 
     if alert_id:
-        alert_api_url = args['opsgenieUrl'] + "/" + alert_id
+        alert_api_url = args['opsgenieUrl'] + "/v2/alerts/" + alert_id
         headers = {
             "Content-Type": "application/json",
             "Accept-Language": "application/json",

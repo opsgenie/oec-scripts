@@ -1,14 +1,14 @@
 import argparse
-import json
-import sys
-import urllib.parse
 import html
+import json
+import logging
+import sys
+import time
+import urllib.parse
 import zipfile
 
 import requests
 from requests.auth import HTTPBasicAuth
-import logging
-import time
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-payload', '--payload', help='Payload from queue', required=True)
@@ -35,6 +35,25 @@ queue_message_string = args['payload']
 queue_message = json.loads(queue_message_string)
 
 
+def parse_field(key, mandatory):
+    variable = queue_message.get(key)
+    if not variable:
+        variable = args.get(key)
+    if mandatory and not variable:
+        logging.error(LOG_PREFIX + " Skipping action, Mandatory conf item '" + str(key) +
+                      "' is missing. Check your configuration file.")
+        raise ValueError(LOG_PREFIX + " Skipping action, Mandatory conf item '" + str(key) +
+                         "' is missing. Check your configuration file.")
+    return variable
+
+
+def parse_timeout():
+    parsed_timeout = args.get('http.timeout')
+    if not parsed_timeout:
+        return 30000
+    return int(parsed_timeout)
+
+
 def parse_from_details(key):
     if key in alert_from_opsgenie["details"].keys():
         return alert_from_opsgenie["details"][key]
@@ -42,17 +61,17 @@ def parse_from_details(key):
 
 
 def get_url(conf_property, backward_compatibility_url):
-    url = args[conf_property]
+    url = parse_field(conf_property, True)
     if url:
         return url
     else:
         # backward compatibility
-        scheme = args["scheme"]
+        scheme = parse_field("scheme", False)
         if not scheme:
             scheme = "http"
 
-        port = args["port"]
-        host = args["host"]
+        port = parse_field("port", False)
+        host = parse_field("host", False)
 
         if not port or not host:
             logging.error(
@@ -74,8 +93,8 @@ def get_image(url, entity):
         service = parse_from_details("service_desc")
         url += "&service=" + urllib.parse.quote(service)
 
-    url += "&username=" + args["username"]
-    url += "&ticket=" + args["ticket"]
+    url += "&username=" + parse_field("username", True)
+    url += "&ticket=" + parse_field("ticket", True)
 
     logging.warning("Sending request to url: " + url)
 
@@ -263,11 +282,11 @@ def attach(entity):
 
     zip_obj = open(file_name, 'rb')
 
-    attach_alert_url = args['opsgenieUrl'] + "/v2/alerts/" + alert_from_opsgenie[
+    attach_alert_url = parse_field('opsgenieUrl', True) + "/v2/alerts/" + alert_from_opsgenie[
         "id"] + "/attachments?alertIdentifierType=id"
 
     headers = {
-        "Authorization": "GenieKey " + args['apiKey']
+        "Authorization": "GenieKey " + parse_field('apiKey', True)
     }
 
     response = requests.post(attach_alert_url, None, headers=headers, files={"file": (file_name, zip_obj)},
@@ -285,8 +304,8 @@ def attach(entity):
 
 def post_to_nagios(post_params):
     url = get_url("command_url", "/nagiosxi/includes/components/nagioscore/ui/cmd.php")
-    post_params["username"] = args["username"]
-    post_params["ticket"] = args['ticket']
+    post_params["username"] = parse_field("username", True)
+    post_params["ticket"] = parse_field('ticket', True)
 
     logging.debug(LOG_PREFIX + "Posting to Nagios. Url " + url + " params:" + str(post_params))
     response = requests.post(url, post_params, timeout=timeout, auth=auth_token)
@@ -315,26 +334,21 @@ def main():
     LOG_PREFIX = "[" + action + "]:"
     logging.warning(LOG_PREFIX + " Will execute action for alertId " + alert["alertId"])
 
-    username = args["username"]
-    password = args['ticket']
-    timeout = args['timeout']
-
-    if timeout:
-        timeout = 30000
-    else:
-        timeout = int(timeout)
+    username = parse_field('username', True)
+    password = parse_field('ticket', True)
+    timeout = parse_timeout()
 
     logging.debug("Username: " + username)
     logging.debug("Password: " + password)
 
     auth_token = HTTPBasicAuth(username, password)
 
-    get_alert_url = args['opsgenieUrl'] + "/v2/alerts/" + alert["alertId"]
+    get_alert_url = parse_field('opsgenieUrl', True) + "/v2/alerts/" + alert["alertId"]
 
     headers = {
         "Content-Type": "application/json",
         "Accept-Language": "application/json",
-        "Authorization": "GenieKey " + args['apiKey']
+        "Authorization": "GenieKey " + parse_field('apiKey', True)
     }
 
     response = requests.get(get_alert_url, None, headers=headers, timeout=timeout)
