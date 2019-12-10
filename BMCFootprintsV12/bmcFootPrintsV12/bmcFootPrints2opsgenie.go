@@ -42,6 +42,7 @@ var logPrefix = "[bmcFootPrints2opsgenie] "
 var bmcFootPrintsWebServiceURL string
 
 var configPath string
+var configPath2 string
 var levels = map[string]log.Level{"info": log.Info, "debug": log.Debug, "warning": log.Warning, "error": log.Error}
 var logger log.Logger
 var ogPrefix string = "[OpsGenie] "
@@ -108,8 +109,10 @@ type TicketDetailsResult struct {
 func main() {
 	if runtime.GOOS == "windows" {
 		configPath = "C:\\opsgenie-integration\\conf\\opsgenie-integration.conf"
+		configPath2 = "C:\\opsgenie-integration\\conf\\config.conf"
 	} else {
-		configPath = "/etc/opsgenie/conf/opsgenie-integration.conf"
+		configPath = "/home/opsgenie/oec/conf/opsgenie-integration.conf"
+		configPath2 = "/home/opsgenie/oec/conf/config.json"
 	}
 
 	configFile, err := os.Open(configPath)
@@ -117,6 +120,12 @@ func main() {
 		readConfigFile(configFile)
 	} else {
 		panic(err)
+	}
+
+	errFromConf := readConfigurationFileFromOECConfig(configPath2)
+
+	if errFromConf != nil {
+		panic(errFromConf)
 	}
 
 	version := flag.String("v", "", "")
@@ -225,6 +234,41 @@ func printConfigToLog() {
 			}
 		}
 	}
+}
+
+func readConfigurationFileFromOECConfig(filepath string) (error) {
+
+	jsonFile, err := os.Open(filepath)
+
+	if err != nil {
+		return err
+	}
+
+	byteValue, _ := ioutil.ReadAll(jsonFile)
+
+	data := Configuration{}
+
+	err = json.Unmarshal([]byte(byteValue), &data)
+
+	if err != nil {
+		return err
+	}
+
+	if configParameters["apiKey"] == "" {
+		configParameters["apiKey"] = data.ApiKey
+	}
+	if configParameters["opsgenie.api.url"] != data.BaseUrl {
+		configParameters["opsgenie.api.url"] = data.BaseUrl
+	}
+
+	defer jsonFile.Close()
+	return err
+
+}
+
+type Configuration struct {
+	ApiKey  string `json:"apiKey"`
+	BaseUrl string `json:"baseUrl"`
 }
 
 func readConfigFile(file io.Reader) {

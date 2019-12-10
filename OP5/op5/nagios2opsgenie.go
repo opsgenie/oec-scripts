@@ -1,39 +1,40 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
+	"crypto/tls"
 	"encoding/json"
 	"flag"
-	"net/http"
-	"net"
-	"time"
-	"os"
-	"bufio"
-	"strings"
-	"io"
-	"strconv"
-	"github.com/alexcesaro/log/golog"
-	"github.com/alexcesaro/log"
 	"fmt"
+	"github.com/alexcesaro/log"
+	"github.com/alexcesaro/log/golog"
+	"io"
 	"io/ioutil"
-	"crypto/tls"
+	"net"
+	"net/http"
 	"net/url"
+	"os"
+	"strconv"
+	"strings"
+	"time"
 )
 
 var API_KEY = ""
 var TOTAL_TIME = 60
 var configParameters = map[string]string{"apiKey": API_KEY,
-	"nagios2opsgenie.logger":"warning",
-	"opsgenie.api.url":"https://api.opsgenie.com",
-	"nagios2opsgenie.http.proxy.enabled" : "false",
-	"nagios2opsgenie.http.proxy.port" : "1111",
-	"nagios2opsgenie.http.proxy.host": "localhost",
-	"nagios2opsgenie.http.proxy.protocol":"http",
+	"nagios2opsgenie.logger":              "warning",
+	"opsgenie.api.url":                    "https://api.opsgenie.com",
+	"nagios2opsgenie.http.proxy.enabled":  "false",
+	"nagios2opsgenie.http.proxy.port":     "1111",
+	"nagios2opsgenie.http.proxy.host":     "localhost",
+	"nagios2opsgenie.http.proxy.protocol": "http",
 	"nagios2opsgenie.http.proxy.username": "",
 	"nagios2opsgenie.http.proxy.password": ""}
 var parameters = make(map[string]string)
-var configPath = "/etc/opsgenie/conf/opsgenie-integration.conf"
-var levels = map[string]log.Level{"info":log.Info, "debug":log.Debug, "warning":log.Warning, "error":log.Error}
+var configPath = "/home/opsgenie/oec/conf/opsgenie-integration.conf"
+var configPath2 = "/home/opsgenie/oec/conf/config.json"
+var levels = map[string]log.Level{"info": log.Info, "debug": log.Debug, "warning": log.Warning, "error": log.Error}
 var logger log.Logger
 
 func main() {
@@ -43,11 +44,17 @@ func main() {
 	} else {
 		panic(err)
 	}
+	logger = configureLogger()
+
+	errFromConf := readConfigurationFileFromOECConfig(configPath2)
+
+	if errFromConf != nil {
+		panic(err)
+	}
 
 	version := flag.String("v", "", "")
 	parseFlags()
 
-	logger = configureLogger()
 	printConfigToLog()
 
 	if *version != "" {
@@ -101,6 +108,40 @@ func readConfigFile(file io.Reader) {
 		panic(err)
 	}
 }
+func readConfigurationFileFromOECConfig(filepath string) (error) {
+
+	jsonFile, err := os.Open(filepath)
+
+	if err != nil {
+		return err
+	}
+
+	byteValue, _ := ioutil.ReadAll(jsonFile)
+
+	data := Configuration{}
+
+	err = json.Unmarshal([]byte(byteValue), &data)
+
+	if err != nil {
+		return err
+	}
+
+	if configParameters["apiKey"] == "" {
+		configParameters["apiKey"] = data.ApiKey
+	}
+	if configParameters["opsgenie.api.url"] != data.BaseUrl {
+		configParameters["opsgenie.api.url"] = data.BaseUrl
+	}
+
+	defer jsonFile.Close()
+	return err
+
+}
+
+type Configuration struct {
+	ApiKey  string `json:"apiKey"`
+	BaseUrl string `json:"baseUrl"`
+}
 
 func configureLogger() log.Logger {
 	level := configParameters["nagios2opsgenie.logger"]
@@ -112,12 +153,12 @@ func configureLogger() log.Logger {
 
 	var tmpLogger log.Logger
 
-	file, err := os.OpenFile(logFilePath, os.O_CREATE | os.O_WRONLY | os.O_APPEND, 0666)
+	file, err := os.OpenFile(logFilePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 
 	if err != nil {
-		fmt.Println("Could not create log file \"" + logFilePath + "\", will log to \"/tmp/nagios2opsgenie.log\" file. Error: ", err)
+		fmt.Println("Could not create log file \""+logFilePath+"\", will log to \"/tmp/nagios2opsgenie.log\" file. Error: ", err)
 
-		fileTmp, errTmp := os.OpenFile("/tmp/nagios2opsgenie.log", os.O_CREATE | os.O_WRONLY | os.O_APPEND, 0666)
+		fileTmp, errTmp := os.OpenFile("/tmp/nagios2opsgenie.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 
 		if errTmp != nil {
 			fmt.Println("Logging disabled. Reason: ", errTmp)
@@ -157,10 +198,10 @@ func getHttpClient(timeout int) *http.Client {
 	}
 	client := &http.Client{
 		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify : true},
-			Proxy: proxy,
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+			Proxy:           proxy,
 			Dial: func(netw, addr string) (net.Conn, error) {
-				conn, err := net.DialTimeout(netw, addr, time.Second * time.Duration(seconds))
+				conn, err := net.DialTimeout(netw, addr, time.Second*time.Duration(seconds))
 				if err != nil {
 					if logger != nil {
 						logger.Error("Error occurred while connecting: ", err)
@@ -187,6 +228,7 @@ func http_post() {
 	apiUrl := configParameters["opsgenie.api.url"] + "/v1/json/op5"
 	target := "OpsGenie"
 
+
 	if logger != nil {
 		logger.Debug("URL: ", apiUrl)
 		logger.Debug("Data to be posted:")
@@ -200,7 +242,7 @@ func http_post() {
 		client := getHttpClient(i)
 
 		if logger != nil {
-			logger.Debug(logPrefix + "Trying to send data to OpsGenie with timeout: ", (TOTAL_TIME / 12) * 2 * i)
+			logger.Debug(logPrefix+"Trying to send data to OpsGenie with timeout: ", (TOTAL_TIME/12)*2*i)
 		}
 
 		resp, error := client.Do(request)
@@ -221,17 +263,17 @@ func http_post() {
 				}
 			} else {
 				if logger != nil {
-					logger.Error(logPrefix + "Couldn't read the response from " + target, err)
+					logger.Error(logPrefix+"Couldn't read the response from "+target, err)
 				}
 			}
 			break
 		} else if i < 3 {
 			if logger != nil {
-				logger.Error(logPrefix + "Error occurred while sending data, will retry.", error)
+				logger.Error(logPrefix+"Error occurred while sending data, will retry.", error)
 			}
 		} else {
 			if logger != nil {
-				logger.Error(logPrefix + "Failed to post data from Nagios. ", error)
+				logger.Error(logPrefix+"Failed to post data from Nagios. ", error)
 			}
 		}
 		if resp != nil {
@@ -417,17 +459,12 @@ func parseFlags() map[string]string {
 
 	args := flag.Args()
 	for i := 0; i < len(args); i += 2 {
-		if (len(args) % 2 != 0 && i == len(args) - 1) {
+		if (len(args)%2 != 0 && i == len(args)-1) {
 			parameters[args[i]] = ""
 		} else {
-			parameters[args[i]] = args[i + 1]
+			parameters[args[i]] = args[i+1]
 		}
 	}
 
 	return parameters
 }
-
-
-
-
-

@@ -1,35 +1,35 @@
 package main
 
 import (
-	"fmt"
-	"net/http"
-	"bytes"
-	"flag"
-	"os"
-	"encoding/json"
-	"github.com/alexcesaro/log/golog"
-	"github.com/alexcesaro/log"
-	"io/ioutil"
-	"path/filepath"
-	"strings"
-	"io"
 	"bufio"
-	"strconv"
-	"net/url"
+	"bytes"
 	"crypto/tls"
+	"encoding/json"
+	"flag"
+	"fmt"
+	"github.com/alexcesaro/log"
+	"github.com/alexcesaro/log/golog"
+	"io"
+	"io/ioutil"
 	"net"
+	"net/http"
+	"net/url"
+	"os"
+	"path/filepath"
+	"strconv"
+	"strings"
 	"time"
 )
 
 var API_KEY string = ""
 var TOTAL_TIME = 60
 var configParameters = map[string]string{"apiKey": API_KEY,
-	"opsgenie.api.url" : "https://api.opsgenie.com",
-	"bmcRemedy2opsgenie.logger":"warning",
-	"bmcRemedy2opsgenie.http.proxy.enabled" : "false",
-	"bmcRemedy2opsgenie.http.proxy.port" : "1111",
-	"bmcRemedy2opsgenie.http.proxy.host": "localhost",
-	"bmcRemedy2opsgenie.http.proxy.protocol":"http",
+	"opsgenie.api.url":                       "https://api.opsgenie.com",
+	"bmcRemedy2opsgenie.logger":              "warning",
+	"bmcRemedy2opsgenie.http.proxy.enabled":  "false",
+	"bmcRemedy2opsgenie.http.proxy.port":     "1111",
+	"bmcRemedy2opsgenie.http.proxy.host":     "localhost",
+	"bmcRemedy2opsgenie.http.proxy.protocol": "http",
 	"bmcRemedy2opsgenie.http.proxy.username": "",
 	"bmcRemedy2opsgenie.http.proxy.password": ""}
 
@@ -75,12 +75,21 @@ func main() {
 
 	configPathPtr := flag.String("config-path", "C:\\OpsGenie\\BMCRemedyIntegration\\opsgenie-integration\\conf\\opsgenie-integration.conf", "OpsGenie Config Path")
 	configFile, err := os.Open(*configPathPtr)
+	configPathPtr2 := flag.String("config-path2", "C:\\OpsGenie\\BMCRemedyIntegration\\opsgenie-integration\\conf\\config.json", "OpsGenie Config Path2")
+	configFile2, err := os.Open(*configPathPtr2)
 
 	if err == nil {
 		readConfigFile(configFile, configPathPtr)
 	} else {
 		panic(err)
 	}
+
+	errFromConf := readConfigurationFileFromOECConfig(configFile2)
+
+	if errFromConf != nil {
+		panic(errFromConf)
+	}
+
 	logger.Debug(configParameters, "\r\n")
 	printConfigToLog()
 
@@ -168,10 +177,10 @@ func getHttpClient(timeout int) *http.Client {
 	logger.Warning("final proxy", proxy, "\r\n")
 	client := &http.Client{
 		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify : true},
-			Proxy: proxy,
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+			Proxy:           proxy,
 			Dial: func(netw, addr string) (net.Conn, error) {
-				conn, err := net.DialTimeout(netw, addr, time.Second * time.Duration(seconds))
+				conn, err := net.DialTimeout(netw, addr, time.Second*time.Duration(seconds))
 				if err != nil {
 					if logger != nil {
 						logger.Error("Error occurred while connecting: ", err, "\r\n")
@@ -207,7 +216,7 @@ func http_post(jsonBody []byte, incidentID string) {
 		client := getHttpClient(i)
 
 		if logger != nil {
-			logger.Info(logPrefix + "Trying to send data to " + target + " with timeout: ", (TOTAL_TIME / 12) * 2 * i, "\r\n")
+			logger.Info(logPrefix+"Trying to send data to "+target+" with timeout: ", (TOTAL_TIME/12)*2*i, "\r\n")
 		}
 
 		resp, error := client.Do(request)
@@ -217,28 +226,28 @@ func http_post(jsonBody []byte, incidentID string) {
 			if err == nil {
 				if resp.StatusCode == 200 {
 					if logger != nil {
-						logger.Debug(logPrefix + "Response code: " + strconv.Itoa(resp.StatusCode), "\r\n")
-						logger.Debug(logPrefix + "Response: " + string(body[:]), "\r\n")
+						logger.Debug(logPrefix+"Response code: "+strconv.Itoa(resp.StatusCode), "\r\n")
+						logger.Debug(logPrefix+"Response: "+string(body[:]), "\r\n")
 						logger.Debug(logPrefix + "Data from BMC Remedy posted to " + target + " successfully \r\n")
 					}
 				} else {
 					if logger != nil {
-						logger.Error(logPrefix + "Couldn't post data from BMC Remedy to " + target + " successfully; Response code: " + strconv.Itoa(resp.StatusCode) + " Response Body: " + string(body[:]), "\r\n")
+						logger.Error(logPrefix+"Couldn't post data from BMC Remedy to "+target+" successfully; Response code: "+strconv.Itoa(resp.StatusCode)+" Response Body: "+string(body[:]), "\r\n")
 					}
 				}
 			} else {
 				if logger != nil {
-					logger.Error(logPrefix + "Couldn't read the response from " + target, err, "\r\n")
+					logger.Error(logPrefix+"Couldn't read the response from "+target, err, "\r\n")
 				}
 			}
 			break
 		} else if i < 3 {
 			if logger != nil {
-				logger.Error(logPrefix + "Error occurred while sending data, will retry.", error, "\r\n")
+				logger.Error(logPrefix+"Error occurred while sending data, will retry.", error, "\r\n")
 			}
 		} else {
 			if logger != nil {
-				logger.Error(logPrefix + "Failed to post data from BMC Remedy ", error, "\r\n")
+				logger.Error(logPrefix+"Failed to post data from BMC Remedy ", error, "\r\n")
 			}
 		}
 		if resp != nil {
@@ -250,10 +259,10 @@ func http_post(jsonBody []byte, incidentID string) {
 func configureLogger(logFilePath string) log.Logger {
 	logFilePath += "\\bmcremedy2opsgenie.log"
 	var tmpLogger log.Logger
-	file, err := os.OpenFile(logFilePath, os.O_CREATE | os.O_WRONLY | os.O_APPEND, 0666)
+	file, err := os.OpenFile(logFilePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 
 	if err != nil {
-		fmt.Println("Could not create log file \"" + logFilePath + " Error: ", err)
+		fmt.Println("Could not create log file \""+logFilePath+" Error: ", err)
 	} else {
 		tmpLogger = golog.New(file, log.Info)
 	}
@@ -301,10 +310,44 @@ func readConfigFile(file io.Reader, configPathPtr *string) {
 	}
 }
 
+func readConfigurationFileFromOECConfig(filepath string) (error) {
+
+	jsonFile, err := os.Open(filepath)
+
+	if err != nil {
+		return err
+	}
+
+	byteValue, _ := ioutil.ReadAll(jsonFile)
+
+	data := Configuration{}
+
+	err = json.Unmarshal([]byte(byteValue), &data)
+
+	if err != nil {
+		return err
+	}
+
+	if configParameters["apiKey"] == "" {
+		configParameters["apiKey"] = data.ApiKey
+	}
+	if configParameters["opsgenie.api.url"] != data.BaseUrl {
+		configParameters["opsgenie.api.url"] = data.BaseUrl
+	}
+
+	defer jsonFile.Close()
+	return err
+
+}
+
+type Configuration struct {
+	ApiKey  string `json:"apiKey"`
+	BaseUrl string `json:"baseUrl"`
+}
+
 func check(err error) {
 	if err != nil {
 		panic(err)
 		logger.Error(err, "\r\n")
 	}
 }
-

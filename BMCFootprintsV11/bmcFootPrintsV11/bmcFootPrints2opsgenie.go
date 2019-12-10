@@ -1,37 +1,37 @@
 package main
 
 import (
-	"bytes"
-	"encoding/json"
-	"flag"
-	"net/http"
-	"net"
-	"time"
-	"os"
 	"bufio"
-	"strings"
-	"io"
-	"strconv"
-	"github.com/alexcesaro/log/golog"
-	"github.com/alexcesaro/log"
-	"fmt"
-	"io/ioutil"
+	"bytes"
 	"crypto/tls"
+	"encoding/json"
 	"encoding/xml"
-	"runtime"
+	"flag"
+	"fmt"
+	"github.com/alexcesaro/log"
+	"github.com/alexcesaro/log/golog"
+	"io"
+	"io/ioutil"
+	"net"
+	"net/http"
 	"net/url"
+	"os"
+	"runtime"
+	"strconv"
+	"strings"
+	"time"
 )
 
 var TOTAL_TIME = 60
 var configParameters = map[string]string{"apiKey": "",
-	"bmcFootPrints.url": "",
-	"bmcFootPrints.username": "",
-	"bmcFootPrints.password": "",
-	"bmcFootPrints2opsgenie.logger": "warning",
-	"opsgenie.api.url": "https://api.opsgenie.com",
-	"bmcFootPrints2opsgenie.http.proxy.enabled": "false",
-	"bmcFootPrints2opsgenie.http.proxy.port": "1111",
-	"bmcFootPrints2opsgenie.http.proxy.host": "localhost",
+	"bmcFootPrints.url":                          "",
+	"bmcFootPrints.username":                     "",
+	"bmcFootPrints.password":                     "",
+	"bmcFootPrints2opsgenie.logger":              "warning",
+	"opsgenie.api.url":                           "https://api.opsgenie.com",
+	"bmcFootPrints2opsgenie.http.proxy.enabled":  "false",
+	"bmcFootPrints2opsgenie.http.proxy.port":     "1111",
+	"bmcFootPrints2opsgenie.http.proxy.host":     "localhost",
 	"bmcFootPrints2opsgenie.http.proxy.protocol": "http",
 	"bmcFootPrints2opsgenie.http.proxy.username": "",
 	"bmcFootPrints2opsgenie.http.proxy.password": ""}
@@ -40,6 +40,7 @@ var logPrefix = "[bmcFootPrints2opsgenie] "
 var bmcFootPrintsWebServiceURL string
 
 var configPath string
+var configPath2 string
 var levels = map[string]log.Level{"info": log.Info, "debug": log.Debug, "warning": log.Warning, "error": log.Error}
 var logger log.Logger
 var ogPrefix string = "[OpsGenie] "
@@ -93,24 +94,26 @@ type IssueDetailsResult struct {
 	UserID              string   `xml:"User__bID"`
 	DescriptionStamp    string   `xml:"description_stamp"`
 	AllDescriptions     AllDescriptions
-	AllDescs            string   `xml:"alldescs"`
-	MRID                int      `xml:"mr"`
+	AllDescs            string `xml:"alldescs"`
+	MRID                int    `xml:"mr"`
 	Editors             Editors
-	EntryDate           string   `xml:"entrydate"`
-	EntryTime           string   `xml:"entrytime"`
-	LastDate            string   `xml:"lastdate"`
-	LastTime            string   `xml:"lasttime"`
-	LastDateServer      string   `xml:"lastdateServer"`
-	LastTimeServer      string   `xml:"lasttimeServer"`
+	EntryDate           string `xml:"entrydate"`
+	EntryTime           string `xml:"entrytime"`
+	LastDate            string `xml:"lastdate"`
+	LastTime            string `xml:"lasttime"`
+	LastDateServer      string `xml:"lastdateServer"`
+	LastTimeServer      string `xml:"lasttimeServer"`
 	MostRecentEdit      MostRecentEdit
-	OpsGenieAlertAlias  string   `xml:"OpsGenie__bAlert__bAlias"`
+	OpsGenieAlertAlias  string `xml:"OpsGenie__bAlert__bAlias"`
 }
 
 func main() {
 	if runtime.GOOS == "windows" {
 		configPath = "C:\\opsgenie-integration\\conf\\opsgenie-integration.conf"
+		configPath2 = "C:\\opsgenie-integration\\conf\\config.json"
 	} else {
-		configPath = "/etc/opsgenie/conf/opsgenie-integration.conf"
+		configPath = "/home/opsgenie/oec/conf/opsgenie-integration.conf"
+		configPath2 = "/home/opsgenie/oec/conf/config.json"
 	}
 
 	configFile, err := os.Open(configPath)
@@ -119,11 +122,16 @@ func main() {
 	} else {
 		panic(err)
 	}
+	logger = configureLogger()
 
+	errFromConf := readConfigurationFileFromOECConfig(configPath2)
+
+	if errFromConf != nil {
+		panic(errFromConf)
+	}
 	version := flag.String("v", "", "")
 	parseFlags()
 
-	logger = configureLogger()
 	printConfigToLog()
 
 	bmcFootPrintsWebServiceURL = reformatUrl(parameters["url"]) + "/MRcgi/MRWebServices.pl"
@@ -259,6 +267,41 @@ func readConfigFile(file io.Reader) {
 	}
 }
 
+func readConfigurationFileFromOECConfig(filepath string) (error) {
+
+	jsonFile, err := os.Open(filepath)
+
+	if err != nil {
+		return err
+	}
+
+	byteValue, _ := ioutil.ReadAll(jsonFile)
+
+	data := Configuration{}
+
+	err = json.Unmarshal([]byte(byteValue), &data)
+
+	if err != nil {
+		return err
+	}
+
+	if configParameters["apiKey"] == "" {
+		configParameters["apiKey"] = data.ApiKey
+	}
+	if configParameters["opsgenie.api.url"] != data.BaseUrl {
+		configParameters["opsgenie.api.url"] = data.BaseUrl
+	}
+
+	defer jsonFile.Close()
+	return err
+
+}
+
+type Configuration struct {
+	ApiKey  string `json:"apiKey"`
+	BaseUrl string `json:"baseUrl"`
+}
+
 func configureLogger() log.Logger {
 	level := configParameters["bmcFootPrints2opsgenie.logger"]
 	var logFilePath = parameters["logPath"]
@@ -380,8 +423,8 @@ func postRequest(url string, data []byte, headersMap map[string]string) string {
 					return string(body[:])
 				} else {
 					if logger != nil {
-						logger.Error(logPrefix + "Couldn't post data to " + url + " successfully; Response code: "+
-							strconv.Itoa(resp.StatusCode)+ " Response Body: "+ string(body[:]), err)
+						logger.Error(logPrefix+"Couldn't post data to "+url+" successfully; Response code: "+
+							strconv.Itoa(resp.StatusCode)+" Response Body: "+string(body[:]), err)
 					}
 				}
 			} else {
@@ -459,9 +502,9 @@ func getInnerElements(str string, tag string, includeMainElement bool) string {
 
 	if beginIndex != -1 && endIndex != -1 {
 		if includeMainElement {
-			return str[beginIndex:endIndex+len(endString)]
+			return str[beginIndex : endIndex+len(endString)]
 		} else {
-			return str[beginIndex+len(beginString):endIndex]
+			return str[beginIndex+len(beginString) : endIndex]
 		}
 	} else {
 		return ""
@@ -470,7 +513,7 @@ func getInnerElements(str string, tag string, includeMainElement bool) string {
 
 func reformatUrl(url string) string {
 	if strings.HasSuffix(url, "/") {
-		return url[0:len(url)-1]
+		return url[0 : len(url)-1]
 	} else {
 		return url
 	}

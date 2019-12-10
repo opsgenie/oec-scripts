@@ -1,59 +1,67 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
+	"crypto/tls"
 	"encoding/json"
 	"flag"
-	"net/http"
-	"net"
-	"time"
-	"os"
-	"bufio"
-	"strings"
-	"io"
-	"strconv"
-	"github.com/alexcesaro/log/golog"
-	"github.com/alexcesaro/log"
 	"fmt"
+	"github.com/alexcesaro/log"
+	"github.com/alexcesaro/log/golog"
+	"io"
 	"io/ioutil"
-	"crypto/tls"
+	"net"
+	"net/http"
 	"net/url"
+	"os"
+	"strconv"
+	"strings"
+	"time"
 )
 
 var NAGIOS_SERVER = "default"
 var API_KEY = ""
 var TOTAL_TIME = 60
 var configParameters = map[string]string{"apiKey": API_KEY,
-	"nagios_server": NAGIOS_SERVER,
-	"nagios2opsgenie.logger":"warning",
-	"opsgenie.api.url":"https://api.opsgenie.com" ,
-	"nagios2opsgenie.http.proxy.enabled" : "false",
-	"nagios2opsgenie.http.proxy.port" : "1111",
-	"nagios2opsgenie.http.proxy.host": "localhost",
-	"nagios2opsgenie.http.proxy.protocol":"http",
+	"nagios_server":                       NAGIOS_SERVER,
+	"nagios2opsgenie.logger":              "warning",
+	"opsgenie.api.url":                    "https://api.opsgenie.com",
+	"nagios2opsgenie.http.proxy.enabled":  "false",
+	"nagios2opsgenie.http.proxy.port":     "1111",
+	"nagios2opsgenie.http.proxy.host":     "localhost",
+	"nagios2opsgenie.http.proxy.protocol": "http",
 	"nagios2opsgenie.http.proxy.username": "",
 	"nagios2opsgenie.http.proxy.password": ""}
 var parameters = make(map[string]string)
-var configPath = "/etc/opsgenie/conf/opsgenie-integration.conf"
-var levels = map [string]log.Level{"info":log.Info,"debug":log.Debug,"warning":log.Warning,"error":log.Error}
+var configPath = "/home/opsgenie/oec/conf/opsgenie-integration.conf"
+var configPath2 = "/home/opsgenie/oec/conf/config.json"
+var levels = map[string]log.Level{"info": log.Info, "debug": log.Debug, "warning": log.Warning, "error": log.Error}
 var logger log.Logger
 
 func main() {
 	configFile, err := os.Open(configPath)
 
-	if err == nil{
+	if err == nil {
 		readConfigFile(configFile)
-	}else{
+	} else {
 		panic(err)
 	}
 
-	version := flag.String("v","","")
+	logger = configureLogger()
+
+	errFromConf := readConfigurationFileFromOECConfig(configPath2)
+
+	if errFromConf != nil {
+		panic(err)
+	}
+
+	version := flag.String("v", "", "")
 	parseFlags()
 
-	logger = configureLogger()
 	printConfigToLog()
 
-	if *version != ""{
+	if *version != "" {
 		fmt.Println("Version: 1.1")
 		return
 	}
@@ -69,33 +77,31 @@ func main() {
 	http_post()
 }
 
-func printConfigToLog(){
+func printConfigToLog() {
 	if logger != nil {
-		if (logger.LogDebug()) {
+		if logger.LogDebug() {
 			logger.Debug("Config:")
 			for k, v := range configParameters {
-				if strings.Contains(k, "password") {
-					logger.Debug(k + "=*******")
-				} else {
-					logger.Debug(k + "=" + v)
-				}
+
+				logger.Debug(k + "=" + v)
+
 			}
 		}
 	}
 }
-func readConfigFile(file io.Reader){
+func readConfigFile(file io.Reader) {
 	scanner := bufio.NewScanner(file)
-	for scanner.Scan(){
+	for scanner.Scan() {
 		line := scanner.Text()
 
 		line = strings.TrimSpace(line)
-		if !strings.HasPrefix(line,"#") && line != "" {
-			l := strings.SplitN(line,"=",2)
+		if !strings.HasPrefix(line, "#") && line != "" {
+			l := strings.SplitN(line, "=", 2)
 			l[0] = strings.TrimSpace(l[0])
 			l[1] = strings.TrimSpace(l[1])
-			configParameters[l[0]]=l[1]
-			if l[0] == "nagios2opsgenie.timeout"{
-				TOTAL_TIME,_ = strconv.Atoi(l[1])
+			configParameters[l[0]] = l[1]
+			if l[0] == "nagios2opsgenie.timeout" {
+				TOTAL_TIME, _ = strconv.Atoi(l[1])
 			}
 		}
 	}
@@ -104,7 +110,42 @@ func readConfigFile(file io.Reader){
 	}
 }
 
-func configureLogger ()log.Logger{
+func readConfigurationFileFromOECConfig(filepath string) (error) {
+
+	jsonFile, err := os.Open(filepath)
+
+	if err != nil {
+		return err
+	}
+
+	byteValue, _ := ioutil.ReadAll(jsonFile)
+
+	data := Configuration{}
+
+	err = json.Unmarshal([]byte(byteValue), &data)
+
+	if err != nil {
+		return err
+	}
+
+	if configParameters["apiKey"] == "" {
+		configParameters["apiKey"] = data.ApiKey
+	}
+	if configParameters["opsgenie.api.url"] != data.BaseUrl {
+		configParameters["opsgenie.api.url"] = data.BaseUrl
+	}
+
+	defer jsonFile.Close()
+	return err
+
+}
+
+type Configuration struct {
+	ApiKey  string `json:"apiKey"`
+	BaseUrl string `json:"baseUrl"`
+}
+
+func configureLogger() log.Logger {
 	level := configParameters["nagios2opsgenie.logger"]
 	var logFilePath = parameters["logPath"]
 
@@ -117,9 +158,9 @@ func configureLogger ()log.Logger{
 	file, err := os.OpenFile(logFilePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 
 	if err != nil {
-		fmt.Println("Could not create log file \"" + logFilePath + "\", will log to \"/tmp/nagios2opsgenie.log\" file. Error: ", err)
+		fmt.Println("Could not create log file \""+logFilePath+"\", will log to \"/tmp/nagios2opsgenie.log\" file. Error: ", err)
 
-		fileTmp, errTmp := os.OpenFile("/tmp/nagios2opsgenie.log", os.O_CREATE | os.O_WRONLY | os.O_APPEND, 0666)
+		fileTmp, errTmp := os.OpenFile("/tmp/nagios2opsgenie.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 
 		if errTmp != nil {
 			fmt.Println("Logging disabled. Reason: ", errTmp)
@@ -133,7 +174,7 @@ func configureLogger ()log.Logger{
 	return tmpLogger
 }
 
-func getHttpClient (timeout int) *http.Client {
+func getHttpClient(timeout int) *http.Client {
 	seconds := (TOTAL_TIME / 12) * 2 * timeout
 	var proxyEnabled = configParameters["nagios2opsgenie.http.proxy.enabled"]
 	var proxyHost = configParameters["nagios2opsgenie.http.proxy.host"]
@@ -143,14 +184,13 @@ func getHttpClient (timeout int) *http.Client {
 	var proxyPassword = configParameters["nagios2opsgenie.http.proxy.password"]
 	proxy := http.ProxyFromEnvironment
 
-
 	if proxyEnabled == "true" {
 
 		u := new(url.URL)
 		u.Scheme = scheme
-		u.Host =  proxyHost + ":" + proxyPort
+		u.Host = proxyHost + ":" + proxyPort
 		if len(proxyUsername) > 0 {
-			u.User = url.UserPassword(proxyUsername,proxyPassword)
+			u.User = url.UserPassword(proxyUsername, proxyPassword)
 		}
 
 		if logger != nil {
@@ -160,10 +200,10 @@ func getHttpClient (timeout int) *http.Client {
 	}
 	client := &http.Client{
 		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify : true},
-			Proxy: proxy,
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+			Proxy:           proxy,
 			Dial: func(netw, addr string) (net.Conn, error) {
-				conn, err := net.DialTimeout(netw, addr, time.Second * time.Duration(seconds))
+				conn, err := net.DialTimeout(netw, addr, time.Second*time.Duration(seconds))
 				if err != nil {
 					if logger != nil {
 						logger.Error("Error occurred while connecting: ", err)
@@ -178,13 +218,13 @@ func getHttpClient (timeout int) *http.Client {
 	return client
 }
 
-func http_post()  {
+func http_post() {
 	var logPrefix = ""
 
-	if parameters["entity_type"] == "host"{
-		logPrefix = "[HostName: "+ parameters["host_name"] + ", HostState: "+ parameters["host_state"] +"]"
-	}else{
-		logPrefix = "[HostName: "+ parameters["host_name"] + ", ServiceDesc: "+ parameters["service_desc"] + ", ServiceState: " + parameters["service_state"] +"]"
+	if parameters["entity_type"] == "host" {
+		logPrefix = "[HostName: " + parameters["host_name"] + ", HostState: " + parameters["host_state"] + "]"
+	} else {
+		logPrefix = "[HostName: " + parameters["host_name"] + ", ServiceDesc: " + parameters["service_desc"] + ", ServiceState: " + parameters["service_state"] + "]"
 	}
 
 	apiUrl := configParameters["opsgenie.api.url"] + "/v1/json/nagiosxi"
@@ -203,52 +243,56 @@ func http_post()  {
 		client := getHttpClient(i)
 
 		if logger != nil {
-			logger.Debug(logPrefix + "Trying to send data to OpsGenie with timeout: ", (TOTAL_TIME / 12) * 2 * i)
+			logger.Debug(logPrefix+"Trying to send data to OpsGenie with timeout: ", (TOTAL_TIME/12)*2*i)
 		}
+
+		strRequest, _ := json.Marshal(request)
+		logger.Debug("strReq: " + string(strRequest))
 
 		resp, error := client.Do(request)
 		if error == nil {
 			defer resp.Body.Close()
 			body, err := ioutil.ReadAll(resp.Body)
-			if err == nil{
-				if resp.StatusCode == 200{
+			if err == nil {
+				if resp.StatusCode == 200 {
 					if logger != nil {
 						logger.Debug(logPrefix + " Response code: " + strconv.Itoa(resp.StatusCode))
 						logger.Debug(logPrefix + "Response: " + string(body[:]))
-						logger.Info(logPrefix +  "Data from Nagios posted to " + target + " successfully")					}
-				}else{
+						logger.Info(logPrefix + "Data from Nagios posted to " + target + " successfully")
+					}
+				} else {
 					if logger != nil {
 						logger.Error(logPrefix + "Couldn't post data from Nagios to " + target + " successfully; Response code: " + strconv.Itoa(resp.StatusCode) + " Response Body: " + string(body[:]))
 					}
 				}
-			}else{
+			} else {
 				if logger != nil {
-					logger.Error(logPrefix + "Couldn't read the response from " + target, err)
+					logger.Error(logPrefix+"Couldn't read the response from "+target, err)
 				}
 			}
 			break
-		}else if i < 3 {
+		} else if i < 3 {
 			if logger != nil {
-				logger.Error(logPrefix + "Error occurred while sending data, will retry.", error)
+				logger.Error(logPrefix+"Error occurred while sending data, will retry.", error)
 			}
-		}else {
+		} else {
 			if logger != nil {
-				logger.Error(logPrefix + "Failed to post data from Nagios. ", error)
+				logger.Error(logPrefix+"Failed to post data from Nagios. ", error)
 			}
 		}
-		if resp != nil{
+		if resp != nil {
 			defer resp.Body.Close()
 		}
 	}
 }
 
-func parseFlags()map[string]string{
-	apiKey := flag.String("apiKey","","api key")
-	nagiosServer := flag.String("ns","","nagios server")
+func parseFlags() map[string]string {
+	apiKey := flag.String("apiKey", "", "api key")
+	nagiosServer := flag.String("ns", "", "nagios server")
 
-	entityType := flag.String("entityType","","")
+	entityType := flag.String("entityType", "", "")
 
-	notificationType := flag.String("t", "","NOTIFICATIONTYPE")
+	notificationType := flag.String("t", "", "NOTIFICATIONTYPE")
 	longDateTime := flag.String("ldt", "", "LONGDATETIME")
 
 	hostName := flag.String("hn", "", "HOSTNAME")
@@ -257,21 +301,21 @@ func parseFlags()map[string]string{
 	hostAddress := flag.String("haddr", "", "HOSTADDRESS")
 	hostState := flag.String("hs", "", "HOSTSTATE")
 	hostStateId := flag.String("hsi", "", "HOSTSTATEID")
-	lastHostState := flag.String("lhs","","LASTHOSTSTATE")
-	lastHostStateId := flag.String("lhsi","","LASTHOSTSTATEID")
-	hostStateType := flag.String("hst","","HOSTSTATETYPE")
+	lastHostState := flag.String("lhs", "", "LASTHOSTSTATE")
+	lastHostStateId := flag.String("lhsi", "", "LASTHOSTSTATEID")
+	hostStateType := flag.String("hst", "", "HOSTSTATETYPE")
 	hostAttempt := flag.String("ha", "", "HOSTATTEMPT")
 	maxHostAttempts := flag.String("mha", "", "MAXHOSTATTEMPTS")
-	hostEventId := flag.String("hei","","HOSTEVENTID")
-	lastHostEventId := flag.String("lhei","","LASTHOSTEVENTID")
-	hostProblemId := flag.String("hpi","","HOSTPROBLEMID")
-	lastHostProblemId := flag.String("lhpi","","LASTHOSTPROBLEMID")
+	hostEventId := flag.String("hei", "", "HOSTEVENTID")
+	lastHostEventId := flag.String("lhei", "", "LASTHOSTEVENTID")
+	hostProblemId := flag.String("hpi", "", "HOSTPROBLEMID")
+	lastHostProblemId := flag.String("lhpi", "", "LASTHOSTPROBLEMID")
 	hostLatency := flag.String("hl", "", "HOSTLATENCY")
-	hostExecutionTime := flag.String ("het","","HOSTEXECUTIONTIME")
+	hostExecutionTime := flag.String("het", "", "HOSTEXECUTIONTIME")
 	hostDuration := flag.String("hd", "", "HOSTDURATION")
 	hostDurationSec := flag.String("hds", "", "HOSTDURATIONSEC")
-	hostDownTime := flag.String("hdt","","HOSTDOWNTIME")
-	hostPercentChange := flag.String("hpc","","HOSTPERCENTCHANGE")
+	hostDownTime := flag.String("hdt", "", "HOSTDOWNTIME")
+	hostPercentChange := flag.String("hpc", "", "HOSTPERCENTCHANGE")
 	hostGroupName := flag.String("hgn", "", "HOSTGROUPNAME")
 	hostGroupNames := flag.String("hgns", "", "HOSTGROUPNAMES")
 	lastHostCheck := flag.String("lhc", "", "LASTHOSTCHECK")
@@ -285,7 +329,7 @@ func parseFlags()map[string]string{
 	hostPerfData := flag.String("hpd", "", "HOSTPERFDATA")
 
 	serviceDesc := flag.String("s", "", "SERVICEDESC")
-	serviceDisplayName := flag.String("sdn","","SERVICEDISPLAYNAME")
+	serviceDisplayName := flag.String("sdn", "", "SERVICEDISPLAYNAME")
 	serviceState := flag.String("ss", "", "SERVICESTATE")
 	serviceStateId := flag.String("ssi", "", "SERVICESTATEID")
 	lastServiceState := flag.String("lss", "", "LASTSERVICESTATE")
@@ -293,57 +337,57 @@ func parseFlags()map[string]string{
 	serviceStateType := flag.String("sst", "", "SERVICESTATETYPE")
 	serviceAttempt := flag.String("sa", "", "SERVICEATTEMPT")
 	maxServiceAttempts := flag.String("msa", "", "MAXSERVICEATTEMPTS")
-	serviceIsVolatile := flag.String("siv","","SERVICEISVOLATILE")
-	serviceEventId := flag.String("sei","","SERVICEEVENTID")
-	lastServiceEventId := flag.String("lsei","","LASTSERVICEEVENTID")
-	serviceProblemId := flag.String("spi","","SERVICEPROBLEMID")
-	lastServiceProblemId := flag.String("lspi","","LASTSERVICEPROBLEMID")
+	serviceIsVolatile := flag.String("siv", "", "SERVICEISVOLATILE")
+	serviceEventId := flag.String("sei", "", "SERVICEEVENTID")
+	lastServiceEventId := flag.String("lsei", "", "LASTSERVICEEVENTID")
+	serviceProblemId := flag.String("spi", "", "SERVICEPROBLEMID")
+	lastServiceProblemId := flag.String("lspi", "", "LASTSERVICEPROBLEMID")
 	serviceLatency := flag.String("sl", "", "SERVICELATENCY")
-	serviceExecutionTime := flag.String("set","","SERVICEEXECUTIONTIME")
+	serviceExecutionTime := flag.String("set", "", "SERVICEEXECUTIONTIME")
 	serviceDuration := flag.String("sd", "", "SERVICEDURATION")
 	serviceDurationSec := flag.String("sds", "", "SERVICEDURATIONSEC")
-	serviceDownTime := flag.String("sdt","","SERVICEDOWNTIME")
-	servicePercentChange := flag.String("spc","","SERVICEPERCENTCHANGE")
+	serviceDownTime := flag.String("sdt", "", "SERVICEDOWNTIME")
+	servicePercentChange := flag.String("spc", "", "SERVICEPERCENTCHANGE")
 	serviceGroupName := flag.String("sgn", "", "SERVICEGROUPNAME")
 	serviceGroupNames := flag.String("sgns", "", "SERVICEGROUPNAMES")
 	lastServiceCheck := flag.String("lsch", "", "LASTSERVICECHECK")
 	lastServiceStateChange := flag.String("lssc", "", "LASTSERVICESTATECHANGE")
-	lastServiceOk := flag.String("lsok","","LASTSERVICEOK")
-	lastServiceWarning := flag.String("lsw","","LASTSERVICEWARNING")
-	lastServiceUnknown := flag.String("lsu","","LASTSERVICEUNKNOWN")
-	lastServiceCritical := flag.String("lsc","","LASTSERVICECRITICAL")
+	lastServiceOk := flag.String("lsok", "", "LASTSERVICEOK")
+	lastServiceWarning := flag.String("lsw", "", "LASTSERVICEWARNING")
+	lastServiceUnknown := flag.String("lsu", "", "LASTSERVICEUNKNOWN")
+	lastServiceCritical := flag.String("lsc", "", "LASTSERVICECRITICAL")
 	serviceOutput := flag.String("so", "", "SERVICEOUTPUT")
 	longServiceOutput := flag.String("lso", "", "LONGSERVICEOUTPUT")
 	serviceNotesUrl := flag.String("snu", "", "SERVICENOTESURL")
 	servicePerfData := flag.String("spd", "", "SERVICEPERFDATA")
 	logPath := flag.String("logPath", "", "LOGPATH")
 
-	responders := flag.String("responders","","Responders")
-	tags := flag.String("tags","","Tags")
+	responders := flag.String("responders", "", "Responders")
+	tags := flag.String("tags", "", "Tags")
 
 	flag.Parse()
 
-	if *apiKey != ""{
+	if *apiKey != "" {
 		parameters["apiKey"] = *apiKey
-	}else{
-		parameters["apiKey"] = configParameters ["apiKey"]
+	} else {
+		parameters["apiKey"] = configParameters["apiKey"]
 	}
-	if *nagiosServer != ""{
+	if *nagiosServer != "" {
 		parameters["nagios_server"] = *nagiosServer
-	}else{
+	} else {
 		parameters["nagios_server"] = configParameters["nagios_server"]
 	}
 
-	if *responders != ""{
+	if *responders != "" {
 		parameters["responders"] = *responders
-	}else{
-		parameters["responders"] = configParameters ["responders"]
+	} else {
+		parameters["responders"] = configParameters["responders"]
 	}
 
-	if *tags != ""{
+	if *tags != "" {
 		parameters["tags"] = *tags
-	}else{
-		parameters["tags"] = configParameters ["tags"]
+	} else {
+		parameters["tags"] = configParameters["tags"]
 	}
 
 	if *logPath != "" {
@@ -425,7 +469,7 @@ func parseFlags()map[string]string{
 
 	args := flag.Args()
 	for i := 0; i < len(args); i += 2 {
-		if(len(args)%2 != 0 && i==len(args)-1){
+		if len(args)%2 != 0 && i == len(args)-1 {
 			parameters[args[i]] = ""
 		} else {
 			parameters[args[i]] = args[i+1]
@@ -434,8 +478,3 @@ func parseFlags()map[string]string{
 
 	return parameters
 }
-
-
-
-
-

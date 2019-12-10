@@ -1,0 +1,16 @@
+################################### NAGIOS2OPSGENIE CONFIGURATION ###############################
+#you can define log levels: warning, debug, info,error
+nagios2opsgenie.logger=warning
+nagios2opsgenie.timeout= 60
+logPath=/var/log/opsgenie/nagios2opsgenie.log
+#responders=<comma_separated_list_of_responders>
+#tags=<comma_separated_list_of_tags>
+
+####################################### PROXY CONFIGURATION FOR NAGIOS ############################################
+nagios2opsgenie.http.proxy.enabled=false
+nagios2opsgenie.http.proxy.port=11111
+nagios2opsgenie.http.proxy.host=localhost
+nagios2opsgenie.http.proxy.protocol=http
+#nagios2opsgenie.http.proxy.username=admin
+#nagios2opsgenie.http.proxy.password=changeme
+

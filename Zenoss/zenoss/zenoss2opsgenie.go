@@ -23,49 +23,50 @@ import (
 var API_KEY = ""
 var TOTAL_TIME = 60
 var configParameters = map[string]string{"apiKey": API_KEY,
-	"zenoss2opsgenie.logger":"warning",
-	"opsgenie.api.url":"https://api.opsgenie.com",
-	"zenoss2opsgenie.http.proxy.enabled" : "false",
-	"zenoss2opsgenie.http.proxy.port" : "1111",
+	"zenoss2opsgenie.logger": "warning",
+	"opsgenie.api.url": "https://api.opsgenie.com",
+	"zenoss2opsgenie.http.proxy.enabled": "false",
+	"zenoss2opsgenie.http.proxy.port": "1111",
 	"zenoss2opsgenie.http.proxy.host": "localhost",
-	"zenoss2opsgenie.http.proxy.protocol":"http",
+	"zenoss2opsgenie.http.proxy.protocol": "http",
 	"zenoss2opsgenie.http.proxy.username": "",
 	"zenoss2opsgenie.http.proxy.password": ""}
 var parameters = make(map[string]interface{})
-var configPath = "/etc/opsgenie/conf/opsgenie-integration.conf"
-var levels = map [string]log.Level{"info":log.Info,"debug":log.Debug,"warning":log.Warning,"error":log.Error}
+var configPath = "/home/opsgenie/oec/conf/opsgenie-integration.conf"
+var configPath2 = "/home/opsgenie/oec/conf/config.json"
+var levels = map[string]log.Level{"info": log.Info, "debug": log.Debug, "warning": log.Warning, "error": log.Error}
 var logger log.Logger
 var logPrefix string
 var eventState string
 
 func main() {
-	version := flag.String("v","","")
+	version := flag.String("v", "", "")
 	parseFlags()
 
 	logger = configureLogger()
+
 	printConfigToLog()
 
-
-	if *version != ""{
+	if *version != "" {
 		fmt.Println("Version: 1.1")
 		return
 	}
-	logPrefix = "[EventId: " + parameters["evid"].(string)  + "]"
+	logPrefix = "[EventId: " + parameters["evid"].(string) + "]"
 	if parameters["test"] == true {
 		logger.Warning("Sending test alert to OpsGenie.")
 	} else {
-		if(strings.ToLower(eventState) == "close"){
+		if (strings.ToLower(eventState) == "close") {
 			if logger != nil {
 				logger.Info("eventState flag is set to close. Will not try to retrieve event details from zenoss")
 			}
-		} else{
+		} else {
 			getEventDetailsFromZenoss()
 		}
 	}
 	postToOpsGenie()
 }
 
-func printConfigToLog(){
+func printConfigToLog() {
 	if logger != nil {
 		if (logger.LogDebug()) {
 			logger.Debug("Config:")
@@ -80,19 +81,19 @@ func printConfigToLog(){
 	}
 }
 
-func readConfigFile(file io.Reader){
+func readConfigFile(file io.Reader) {
 	scanner := bufio.NewScanner(file)
-	for scanner.Scan(){
+	for scanner.Scan() {
 		line := scanner.Text()
 
 		line = strings.TrimSpace(line)
-		if !strings.HasPrefix(line,"#") && line != "" {
-			l := strings.SplitN(line,"=",2)
+		if !strings.HasPrefix(line, "#") && line != "" {
+			l := strings.SplitN(line, "=", 2)
 			l[0] = strings.TrimSpace(l[0])
 			l[1] = strings.TrimSpace(l[1])
-			configParameters[l[0]]=l[1]
-			if l[0] == "zenoss2opsgenie.timeout"{
-				TOTAL_TIME,_ = strconv.Atoi(l[1])
+			configParameters[l[0]] = l[1]
+			if l[0] == "zenoss2opsgenie.timeout" {
+				TOTAL_TIME, _ = strconv.Atoi(l[1])
 			}
 		}
 	}
@@ -100,8 +101,41 @@ func readConfigFile(file io.Reader){
 		panic(err)
 	}
 }
+func readConfigurationFileFromOECConfig(filepath string) (error) {
 
-func configureLogger ()log.Logger{
+	jsonFile, err := os.Open(filepath)
+
+	if err != nil {
+		return err
+	}
+
+	byteValue, _ := ioutil.ReadAll(jsonFile)
+
+	data := Configuration{}
+
+	err = json.Unmarshal([]byte(byteValue), &data)
+
+	if err != nil {
+		return err
+	}
+
+	if configParameters["apiKey"] == "" {
+		configParameters["apiKey"] = data.ApiKey
+	}
+	if configParameters["opsgenie.api.url"] != data.BaseUrl {
+		configParameters["opsgenie.api.url"] = data.BaseUrl
+	}
+
+	defer jsonFile.Close()
+	return err
+
+}
+
+type Configuration struct {
+	ApiKey  string `json:"apiKey"`
+	BaseUrl string `json:"baseUrl"`
+}
+func configureLogger() log.Logger {
 	level := configParameters["zenoss2opsgenie.logger"]
 	var logFilePath = parameters["logPath"].(string)
 
@@ -114,9 +148,9 @@ func configureLogger ()log.Logger{
 	file, err := os.OpenFile(logFilePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 
 	if err != nil {
-		fmt.Println("Could not create log file \"" + logFilePath + "\", will log to \"/tmp/zenoss2opsgenie.log\" file. Error: ", err)
+		fmt.Println("Could not create log file \""+logFilePath+"\", will log to \"/tmp/zenoss2opsgenie.log\" file. Error: ", err)
 
-		fileTmp, errTmp := os.OpenFile("/tmp/zenoss2opsgenie.log", os.O_CREATE | os.O_WRONLY | os.O_APPEND, 0666)
+		fileTmp, errTmp := os.OpenFile("/tmp/zenoss2opsgenie.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 
 		if errTmp != nil {
 			fmt.Println("Logging disabled. Reason: ", errTmp)
@@ -130,8 +164,7 @@ func configureLogger ()log.Logger{
 	return tmpLogger
 }
 
-
-func getHttpClient (timeout int) *http.Client {
+func getHttpClient(timeout int) *http.Client {
 	seconds := (TOTAL_TIME / 12) * 2 * timeout
 	var proxyEnabled = configParameters["zenoss2opsgenie.http.proxy.enabled"]
 	var proxyHost = configParameters["zenoss2opsgenie.http.proxy.host"]
@@ -141,14 +174,13 @@ func getHttpClient (timeout int) *http.Client {
 	var proxyPassword = configParameters["zenoss2opsgenie.http.proxy.password"]
 	proxy := http.ProxyFromEnvironment
 
-
 	if proxyEnabled == "true" {
 
 		u := new(url.URL)
 		u.Scheme = scheme
-		u.Host =  proxyHost + ":" + proxyPort
+		u.Host = proxyHost + ":" + proxyPort
 		if len(proxyUsername) > 0 {
-			u.User = url.UserPassword(proxyUsername,proxyPassword)
+			u.User = url.UserPassword(proxyUsername, proxyPassword)
 		}
 		if logger != nil {
 			logger.Debug("Formed Proxy url: ", u)
@@ -157,10 +189,10 @@ func getHttpClient (timeout int) *http.Client {
 	}
 	client := &http.Client{
 		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify : true},
-			Proxy: proxy,
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+			Proxy:           proxy,
 			Dial: func(netw, addr string) (net.Conn, error) {
-				conn, err := net.DialTimeout(netw, addr, time.Second * time.Duration(seconds))
+				conn, err := net.DialTimeout(netw, addr, time.Second*time.Duration(seconds))
 				if err != nil {
 					if logger != nil {
 						logger.Error("Error occurred while connecting: ", err)
@@ -175,11 +207,11 @@ func getHttpClient (timeout int) *http.Client {
 	return client
 }
 
-func getEventDetailsFromZenoss(){
+func getEventDetailsFromZenoss() {
 	zenossApiUrl := configParameters["zenoss.command_url"]
 
-	data := [1]interface {}{map[string]interface {}{"evid":parameters["evid"].(string)}}
-	zenossParams := map[string]interface{}{"action":"EventsRouter", "method":"detail", "data": data, "type":"rpc", "tid":1}
+	data := [1]interface{}{map[string]interface{}{"evid": parameters["evid"].(string)}}
+	zenossParams := map[string]interface{}{"action": "EventsRouter", "method": "detail", "data": data, "type": "rpc", "tid": 1}
 
 	if logger != nil {
 		logger.Debug("Data to be posted to Zenoss:")
@@ -204,8 +236,8 @@ func getEventDetailsFromZenoss(){
 	if error == nil {
 		defer resp.Body.Close()
 		body, err := ioutil.ReadAll(resp.Body)
-		if err == nil{
-			if resp.StatusCode == 200{
+		if err == nil {
+			if resp.StatusCode == 200 {
 				if logger != nil {
 					logger.Info(logPrefix + "Retrieved event data from Zenoss successfully;")
 					logger.Debug(logPrefix + "Response body: " + string(body[:]))
@@ -214,32 +246,32 @@ func getEventDetailsFromZenoss(){
 				var data map[string]interface{}
 
 				if err := json.Unmarshal(body, &data); err != nil {
-					logErrorAndExit("Error occurred while unmarshalling event data: ",err)
+					logErrorAndExit("Error occurred while unmarshalling event data: ", err)
 				}
 				parameters["eventData"] = data
-			}else{
-				logErrorAndExit("Couldn't retrieve event data from Zenoss successfully; Response code: " + strconv.Itoa(resp.StatusCode) + " Response Body: " + string(body[:]),error)
+			} else {
+				logErrorAndExit("Couldn't retrieve event data from Zenoss successfully; Response code: "+strconv.Itoa(resp.StatusCode)+" Response Body: "+string(body[:]), error)
 			}
-		}else{
+		} else {
 			logErrorAndExit("Couldn't read the response from", err)
 		}
-	}else {
+	} else {
 		logErrorAndExit("Failed to get data from Zenoss", error)
 	}
-	if resp != nil{
+	if resp != nil {
 		defer resp.Body.Close()
 	}
 }
 
-func logErrorAndExit(log string, err error){
+func logErrorAndExit(log string, err error) {
 	if logger != nil {
-		logger.Error(logPrefix + log, err)
+		logger.Error(logPrefix+log, err)
 	}
 	os.Exit(1)
 }
 
 func postToOpsGenie() {
-	apiUrl := configParameters["opsgenie.api.url"]+ "/v1/json/zenoss"
+	apiUrl := configParameters["opsgenie.api.url"] + "/v1/json/zenoss"
 	target := "OpsGenie"
 
 	if logger != nil {
@@ -255,62 +287,61 @@ func postToOpsGenie() {
 		client := getHttpClient(i)
 
 		if logger != nil {
-			logger.Debug(logPrefix + "Trying to send data to OpsGenie with timeout: ", (TOTAL_TIME / 12) * 2 * i)
+			logger.Debug(logPrefix+"Trying to send data to OpsGenie with timeout: ", (TOTAL_TIME/12)*2*i)
 		}
 
 		resp, error := client.Do(request)
 		if error == nil {
 			defer resp.Body.Close()
 			body, err := ioutil.ReadAll(resp.Body)
-			if err == nil{
-				if resp.StatusCode == 200{
+			if err == nil {
+				if resp.StatusCode == 200 {
 					if logger != nil {
 						logger.Debug(logPrefix + " Response code: " + strconv.Itoa(resp.StatusCode))
 						logger.Debug(logPrefix + "Response: " + string(body[:]))
-						logger.Info(logPrefix +  "Data from Zenoss posted to " + target + " successfully")
+						logger.Info(logPrefix + "Data from Zenoss posted to " + target + " successfully")
 					}
-				}else{
+				} else {
 					if logger != nil {
 						logger.Error(logPrefix + "Couldn't post data from Zenoss to " + target + " successfully; Response code: " + strconv.Itoa(resp.StatusCode) + " Response Body: " + string(body[:]))
 					}
 				}
-			}else{
+			} else {
 				if logger != nil {
-					logger.Error(logPrefix + "Couldn't read the response from " + target, err)
+					logger.Error(logPrefix+"Couldn't read the response from "+target, err)
 				}
 			}
 			break
-		}else if i < 3 {
+		} else if i < 3 {
 			if logger != nil {
-				logger.Error(logPrefix + "Error occurred while sending data, will retry.", error)
+				logger.Error(logPrefix+"Error occurred while sending data, will retry.", error)
 			}
-		}else {
+		} else {
 			if logger != nil {
-				logger.Error(logPrefix + "Failed to post data from Zenoss.", error)
+				logger.Error(logPrefix+"Failed to post data from Zenoss.", error)
 			}
 		}
-		if resp != nil{
+		if resp != nil {
 			defer resp.Body.Close()
 		}
 	}
 }
 
-func parseFlags(){
-	apiKey := flag.String("apiKey","","Api Key")
-	evid := flag.String("evid","","Event Id")
-	responders := flag.String("responders","","Responders")
-	tags := flag.String("tags","","Tags")
+func parseFlags() {
+	apiKey := flag.String("apiKey", "", "Api Key")
+	evid := flag.String("evid", "", "Event Id")
+	responders := flag.String("responders", "", "Responders")
+	tags := flag.String("tags", "", "Tags")
 	state := flag.String("eventState", "", "Event State")
 	configloc := flag.String("config", "", "Config File Location")
 	logPath := flag.String("logPath", "", "LOGPATH")
 	test := flag.Bool("test", false, "Test (boolean)")
 
-
 	flag.Parse()
 
 	args := flag.Args()
 	for i := 0; i < len(args); i += 2 {
-		if(len(args)%2 != 0 && i==len(args)-1){
+		if (len(args)%2 != 0 && i == len(args)-1) {
 			parameters[args[i]] = ""
 		} else {
 			parameters[args[i]] = args[i+1]
@@ -320,33 +351,39 @@ func parseFlags(){
 
 	eventState = *state
 
-	if *configloc != ""{
+	if *configloc != "" {
 		configPath = *configloc
 	}
 
 	configFile, err := os.Open(configPath)
 
-	if err == nil{
+	if err == nil {
 		readConfigFile(configFile)
-	}else{
+	} else {
 		panic(err)
 	}
 
-	if *apiKey != ""{
-		parameters["apiKey"] = *apiKey
-	}else{
-		parameters["apiKey"] = configParameters ["apiKey"]
+	errFromConf := readConfigurationFileFromOECConfig(configPath2)
+
+	if errFromConf != nil {
+		panic(errFromConf)
 	}
 
-	if *responders != ""{
+	if *apiKey != "" {
+		parameters["apiKey"] = *apiKey
+	} else {
+		parameters["apiKey"] = configParameters["apiKey"]
+	}
+
+	if *responders != "" {
 		parameters["responders"] = *responders
-	}else{
+	} else {
 		parameters["responders"] = configParameters ["responders"]
 	}
 
-	if *tags != ""{
+	if *tags != "" {
 		parameters["tags"] = *tags
-	}else{
+	} else {
 		parameters["tags"] = configParameters ["tags"]
 	}
 
@@ -362,4 +399,3 @@ func parseFlags(){
 
 	parameters["evid"] = *evid
 }
-

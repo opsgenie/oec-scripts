@@ -34,7 +34,8 @@ var configParameters = map[string]string{"apiKey": API_KEY,
 	"icinga2opsgenie.http.proxy.username": "",
 	"icinga2opsgenie.http.proxy.password": ""}
 var parameters = make(map[string]string)
-var configPath = "/etc/opsgenie/conf/opsgenie-integration.conf"
+var configPath = "/home/opsgenie/oec/conf/opsgenie-integration.conf"
+var configPath2 = "/home/opsgenie/oec/conf/config.json"
 var levels = map [string]log.Level{"info":log.Info,"debug":log.Debug,"warning":log.Warning,"error":log.Error}
 var logger log.Logger
 
@@ -47,10 +48,17 @@ func main() {
 		panic(err)
 	}
 
+	logger = configureLogger()
+
+	errFromConf := readConfigurationFileFromOECConfig(configPath2)
+
+	if errFromConf != nil {
+		panic(err)
+	}
+
 	version := flag.String("v","","")
 	parseFlags()
 
-	logger = configureLogger()
 	printConfigToLog()
 
 	if *version != ""{
@@ -106,6 +114,41 @@ func readConfigFile(file io.Reader){
 	if err := scanner.Err(); err != nil {
 		panic(err)
 	}
+}
+
+func readConfigurationFileFromOECConfig(filepath string) (error) {
+
+	jsonFile, err := os.Open(filepath)
+
+	if err != nil {
+		return err
+	}
+
+	byteValue, _ := ioutil.ReadAll(jsonFile)
+
+	data := Configuration{}
+
+	err = json.Unmarshal([]byte(byteValue), &data)
+
+	if err != nil {
+		return err
+	}
+
+	if configParameters["apiKey"] == "" {
+		configParameters["apiKey"] = data.ApiKey
+	}
+	if configParameters["opsgenie.api.url"] != data.BaseUrl {
+		configParameters["opsgenie.api.url"] = data.BaseUrl
+	}
+
+	defer jsonFile.Close()
+	return err
+
+}
+
+type Configuration struct {
+	ApiKey  string `json:"apiKey"`
+	BaseUrl string `json:"baseUrl"`
 }
 
 func configureLogger ()log.Logger{
@@ -192,7 +235,7 @@ func http_post()  {
 
 
 	apiUrl := configParameters["opsgenie.api.url"] + "/v1/json/icinga"
-	target := "OpsGenie"
+	target := ="OpsGenie"
 
 	if logger != nil {
 		logger.Debug("URL: ", apiUrl)
@@ -328,12 +371,12 @@ func parseFlags()map[string]string{
 	tags := flag.String("tags","","Tags")
 
 	flag.Parse()
-
 	if *apiKey != ""{
 		parameters["apiKey"] = *apiKey
 	}else{
-		parameters["apiKey"] = configParameters ["apiKey"]
+		parameters["apiKey"] = configParameters["apiKey"]
 	}
+
 	if *icingaServer != ""{
 		parameters["icinga_server"] = *icingaServer
 	}else{
@@ -441,8 +484,3 @@ func parseFlags()map[string]string{
 
 	return parameters
 }
-
-
-
-
-
