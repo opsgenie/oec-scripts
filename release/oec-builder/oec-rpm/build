@@ -1,0 +1,32 @@
+#!/bin/bash
+
+#need to get executables from s3 and put under rpmbuild
+mkdir /rpmbuild
+cp $OEC_SCRIPTS_REPO/release/oec-builder/executables/OpsgenieEdgeConnector /rpmbuild
+cp -R $INPUT/. /rpmbuild && \
+cp -R $OEC_SCRIPTS_REPO/$INTEGRATION/. /rpmbuild/oec-scripts && \
+
+#########incoming part##########
+go get -u github.com/alexcesaro/log && \
+cd /rpmbuild/oec-scripts/${INTEGRATION,,} && \
+GOOS=linux GOARCH=amd64 go build -o send2opsgenie send2opsgenie.go && \
+################################
+
+sed -i "s|<path_of_script>|$RPM_BUILD_ROOT/home/opsgenie/oec/scripts/actionExecutor.py|" /rpmbuild/oec-scripts/conf/config.json
+sed -i "s|<path_of_output_file_of_script>|$RPM_BUILD_ROOT/home/opsgenie/oec/output/output.txt|" /rpmbuild/oec-scripts/conf/config.json
+sed -i "s/<local | git>/local/g" /rpmbuild/oec-scripts/conf/config.json
+
+sed -i "s/%VERSION%/$OEC_VERSION/g" /rpmbuild/SPECS/oec.spec && \
+sed -i "s/%VERSION%/$OEC_VERSION/g" /rpmbuild/SPECS/oec-rhel6.spec && \
+
+sed -i "s/%INTEGRATION%/${INTEGRATION,,}/g" /rpmbuild/SPECS/oec.spec && \
+sed -i "s/%INTEGRATION%/${INTEGRATION,,}/g" /rpmbuild/SPECS/oec-rhel6.spec && \
+
+cd ~ && \
+mkdir -p $OUTPUT/oec-packages-$OEC_VERSION/${INTEGRATION,,} && \
+
+rpmbuild --target=x86_64 -ba /rpmbuild/SPECS/oec.spec && \
+cp -R /root/rpmbuild/RPMS/x86_64/${INTEGRATION,,}* $OUTPUT/oec-packages-$OEC_VERSION/${INTEGRATION,,}/ && \
+
+rpmbuild --target=x86_64 -ba /rpmbuild/SPECS/oec-rhel6.spec && \
+cp -R /root/rpmbuild/RPMS/x86_64/${INTEGRATION,,}* $OUTPUT/oec-packages-$OEC_VERSION/${INTEGRATION,,}/

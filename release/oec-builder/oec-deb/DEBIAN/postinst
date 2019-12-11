@@ -1,0 +1,8 @@
+#!/bin/bash
+chown -R opsgenie:opsgenie /home/opsgenie
+chown -R opsgenie:opsgenie /var/log/opsgenie
+
+chmod +x /etc/systemd/system/oec.service
+chmod +x /usr/local/bin/OpsgenieEdgeConnector
+systemctl daemon-reload
+systemctl enable oec

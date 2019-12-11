@@ -1,0 +1,8 @@
+Name: Opsgenie Edge Connector (OEC)
+Description: Integration server for Connecting On-Premise Monitoring and ITSM Tools
+Website: https://www.opsgenie.com
+Maintainer: Opsgenie
+Package: %INTEGRATION%
+Section: %INTEGRATION%
+Version: %VERSION%
+Architecture: amd64

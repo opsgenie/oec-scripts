@@ -1,0 +1,13 @@
+{
+	"Name": "OEC Service",
+	"DisplayName": "OEC Service",
+	"Description": "Run the OEC Service",
+	"OECPath" : "C:\\opsgenie\\oec\\OpsgenieEdgeConnector64.exe",
+	"Args" : ["-oec-metrics", "7070"],
+	"Env": [
+		"OEC_CONF_LOCAL_FILEPATH=C:\\opsgenie\\oec\\conf\\config.json",
+		"OEC_CONF_SOURCE_TYPE=local"
+	],
+	"Stderr": "C:\\opsgenie\\oec\\output\\oecErr.log",
+	"Stdout": "C:\\opsgenie\\oec\\output\\oecOut.log"
+}

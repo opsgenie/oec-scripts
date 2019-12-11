@@ -1,0 +1,21 @@
+#!/bin/bash
+
+#get oecService64.exe and OpsgenieEdgeConnector64.exe from s3
+mkdir /oec
+cp $OEC_SCRIPTS_REPO/release/oec-builder/executables/OpsgenieEdgeConnector64.exe /oec
+cp $OEC_SCRIPTS_REPO/release/oec-builder/executables/oecService64.exe /oec
+
+cp -R $INPUT/oecService.json.example /oec && \
+cp -R $OEC_SCRIPTS_REPO/$INTEGRATION/. /oec && \
+
+#########incoming part##########
+go get -u github.com/alexcesaro/log && \
+cd /oec/${INTEGRATION,,} && \
+GOOS=windows GOARCH=amd64 go build -o send2opsgenie send2opsgenie.go && \
+################################
+
+cd ~ && \
+mkdir -p $OUTPUT/oec-packages-$OEC_VERSION/${INTEGRATION,,} && \
+
+zip -r ${INTEGRATION,,}-$OEC_VERSION-win-amd64.zip /oec  && \
+cp -R ${INTEGRATION,,}* $OUTPUT/oec-packages-$OEC_VERSION/${INTEGRATION,,}/

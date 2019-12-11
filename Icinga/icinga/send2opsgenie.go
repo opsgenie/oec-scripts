@@ -235,7 +235,7 @@ func http_post()  {
 
 
 	apiUrl := configParameters["opsgenie.api.url"] + "/v1/json/icinga"
-	target := ="OpsGenie"
+	target := "OpsGenie"
 
 	if logger != nil {
 		logger.Debug("URL: ", apiUrl)
