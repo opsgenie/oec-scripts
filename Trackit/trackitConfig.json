@@ -29,6 +29,33 @@
       ],
       "stdout": "<path_of_output_file_of_script>"
     },
+    "AddResponder": {
+      "filepath": "<path_of_script>",
+      "sourceType": "<local | git>",
+      "environmentVariables": [
+        "e1=v1",
+        "e2=v2"
+      ],
+      "stdout": "<path_of_output_file_of_script>"
+    },
+    "AssignOwnership": {
+      "filepath": "<path_of_script>",
+      "sourceType": "<local | git>",
+      "environmentVariables": [
+        "e1=v1",
+        "e2=v2"
+      ],
+      "stdout": "<path_of_output_file_of_script>"
+    },
+    "TakeOwnership": {
+      "filepath": "<path_of_script>",
+      "sourceType": "<local | git>",
+      "environmentVariables": [
+        "e1=v1",
+        "e2=v2"
+      ],
+      "stdout": "<path_of_output_file_of_script>"
+    },
     "Close": {
       "filepath": "<path_of_script>",
       "sourceType": "<local | git>",
