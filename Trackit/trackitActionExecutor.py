@@ -117,12 +117,9 @@ def main():
         elif action == "AddNote":
             note = str(alert['note'])
             message = user_name + " noted: \"" + note + "\" on alert: \"" + message + "\""
-        elif action == "AddRecipient":
-            recipient = str(alert['recipient'])
-            message = user_name + " added recipient " + recipient + " to alert: \"" + message + "\""
-        elif action == "AddTeam":
-            team = str(alert['team'])
-            message = user_name + " added team " + team + " to alert: \"" + message + "\""
+        elif action == "AddResponder":
+            responder = str(alert['responder'])
+            message = user_name + " added responder " + responder + " to alert: \"" + message + "\""
         elif action == "AssignOwnership":
             owner = str(alert['owner'])
             message = user_name + " assigned ownership of the alert: \"" + message + "\" to " + \
