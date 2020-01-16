@@ -5,6 +5,7 @@ import os
 import sys
 import time
 import zipfile
+import tempfile
 
 import html
 import requests
@@ -31,8 +32,6 @@ queue_message = json.loads(queue_message_string)
 
 logging.basicConfig(stream=sys.stdout, level=args['logLevel'])
 
-
-DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 
 def parse_field(key, mandatory):
     variable = queue_message[key]
@@ -120,25 +119,27 @@ def attach(is_service_alert):
     html_text = create_html(is_service_alert, perf_data)
     logging.info("Attaching details")
 
-    file_date = time.strftime("%Y_%m_%d_%H_%m_%s")
-    file_name = os.path.join(DIR_PATH, "details_{}.zip".format(file_date))
+    with tempfile.TemporaryDirectory() as tempdir:
+        file_date = time.strftime("%Y_%m_%d_%H_%m_%s")
+        file_name = "details_" + file_date + ".zip"
+        full_path_of_zip = os.path.join(tempdir, file_name)
 
-    zip_file = zipfile.ZipFile(file_name, 'w')
-    zip_file.writestr('index.html', html_text)
-    if perf_data:
-        zip_file.writestr('perfData.png', perf_data)
-    zip_file.close()
+        zip_file = zipfile.ZipFile(full_path_of_zip, 'w')
+        zip_file.writestr('index.html', html_text)
+        if perf_data:
+            zip_file.writestr('perfData.png', perf_data)
+        zip_file.close()
 
-    zip_obj = open(file_name, 'rb')
-    attach_alert_url = args['opsgenieUrl'] + "/v2/alerts/" + alert_from_opsgenie[
-        "id"] + "/attachments?alertIdentifierType=id"
+        zip_obj = open(full_path_of_zip, 'rb')
+        attach_alert_url = args['opsgenieUrl'] + "/v2/alerts/" + alert_from_opsgenie[
+            "id"] + "/attachments?alertIdentifierType=id"
 
-    headers = {
-        "Authorization": "GenieKey " + args['apiKey']
-    }
+        headers = {
+            "Authorization": "GenieKey " + args['apiKey']
+        }
 
-    response = requests.post(attach_alert_url, None, headers=headers, files={"file": (file_name, zip_obj)},
-                             timeout=HTTP_TIMEOUT)
+        response = requests.post(attach_alert_url, None, headers=headers, files={"file": (file_name, zip_obj)},
+                                timeout=HTTP_TIMEOUT)
 
     if 200 <= response.status_code < 400:
         logging.info("Successfully attached details " + file_name)
