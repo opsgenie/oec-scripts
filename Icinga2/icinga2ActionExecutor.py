@@ -154,7 +154,7 @@ def create_html(is_service_alert, perf_data):
         buf += get_host_status_html()
 
     if perf_data:
-        buf += """<div class="img"><img src="perf_data.png"></div>"""
+        buf += """<div class="img"><img src="perfData.png"></div>"""
 
     buf += """
                 </div>
