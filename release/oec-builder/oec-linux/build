@@ -5,14 +5,16 @@ mkdir /oec
 cp $OEC_SCRIPTS_REPO/release/oec-builder/executables/OpsgenieEdgeConnector /oec
 cp -R $OEC_SCRIPTS_REPO/$INTEGRATION/. /oec
 
+INTEGRATION_PATH=$(echo "$INTEGRATION" | awk '{print tolower($0)}')
+
 #########incoming part##########
 go get -u github.com/alexcesaro/log && \
-cd /oec/${INTEGRATION,,} && \
+cd /oec/${INTEGRATION_PATH} && \
 GOOS=linux GOARCH=amd64 go build -o send2opsgenie send2opsgenie.go && \
 ################################
 
 cd ~ && \
-mkdir -p $OUTPUT/oec-packages-$OEC_VERSION/${INTEGRATION,,} && \
+mkdir -p $OUTPUT/oec-packages-$OEC_VERSION/${INTEGRATION_PATH} && \
 
-zip -r ${INTEGRATION,,}-$OEC_VERSION-linux-amd64.zip /oec  && \
-cp -R ${INTEGRATION,,}* $OUTPUT/oec-packages-$OEC_VERSION/${INTEGRATION,,}/
+zip -r ${INTEGRATION_PATH}-$OEC_VERSION-linux-amd64.zip /oec  && \
+cp -R ${INTEGRATION_PATH}* $OUTPUT/oec-packages-$OEC_VERSION/${INTEGRATION_PATH}/

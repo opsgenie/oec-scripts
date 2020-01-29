@@ -6,9 +6,11 @@ cp $OEC_SCRIPTS_REPO/release/oec-builder/executables/OpsgenieEdgeConnector /rpmb
 cp -R $INPUT/. /rpmbuild && \
 cp -R $OEC_SCRIPTS_REPO/$INTEGRATION/. /rpmbuild/oec-scripts && \
 
+INTEGRATION_PATH=$(echo "$INTEGRATION" | awk '{print tolower($0)}')
+
 #########incoming part##########
 go get -u github.com/alexcesaro/log && \
-cd /rpmbuild/oec-scripts/${INTEGRATION,,} && \
+cd /rpmbuild/oec-scripts/${INTEGRATION_PATH} && \
 GOOS=linux GOARCH=amd64 go build -o send2opsgenie send2opsgenie.go && \
 ################################
 
@@ -19,14 +21,14 @@ sed -i "s/<local | git>/local/g" /rpmbuild/oec-scripts/conf/config.json
 sed -i "s/%VERSION%/$OEC_VERSION/g" /rpmbuild/SPECS/oec.spec && \
 sed -i "s/%VERSION%/$OEC_VERSION/g" /rpmbuild/SPECS/oec-rhel6.spec && \
 
-sed -i "s/%INTEGRATION%/${INTEGRATION,,}/g" /rpmbuild/SPECS/oec.spec && \
-sed -i "s/%INTEGRATION%/${INTEGRATION,,}/g" /rpmbuild/SPECS/oec-rhel6.spec && \
+sed -i "s/%INTEGRATION%/${INTEGRATION_PATH}/g" /rpmbuild/SPECS/oec.spec && \
+sed -i "s/%INTEGRATION%/${INTEGRATION_PATH}/g" /rpmbuild/SPECS/oec-rhel6.spec && \
 
 cd ~ && \
-mkdir -p $OUTPUT/oec-packages-$OEC_VERSION/${INTEGRATION,,} && \
+mkdir -p $OUTPUT/oec-packages-$OEC_VERSION/${INTEGRATION_PATH} && \
 
 rpmbuild --target=x86_64 -ba /rpmbuild/SPECS/oec.spec && \
-cp -R /root/rpmbuild/RPMS/x86_64/${INTEGRATION,,}* $OUTPUT/oec-packages-$OEC_VERSION/${INTEGRATION,,}/ && \
+cp -R /root/rpmbuild/RPMS/x86_64/${INTEGRATION_PATH}* $OUTPUT/oec-packages-$OEC_VERSION/${INTEGRATION_PATH}/ && \
 
 rpmbuild --target=x86_64 -ba /rpmbuild/SPECS/oec-rhel6.spec && \
-cp -R /root/rpmbuild/RPMS/x86_64/${INTEGRATION,,}* $OUTPUT/oec-packages-$OEC_VERSION/${INTEGRATION,,}/
+cp -R /root/rpmbuild/RPMS/x86_64/${INTEGRATION_PATH}* $OUTPUT/oec-packages-$OEC_VERSION/${INTEGRATION_PATH}/
