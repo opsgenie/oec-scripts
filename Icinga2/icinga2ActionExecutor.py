@@ -325,7 +325,6 @@ def main():
         HTTP_TIMEOUT = int(HTTP_TIMEOUT)
 
     logging.debug("Username: " + username)
-    logging.debug("Password: " + password)
 
     get_alert_url = args['opsgenieUrl'] + "/v2/alerts/" + alert["alertId"] + "?alertIdentifierType=id"
 
