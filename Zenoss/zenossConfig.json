@@ -2,9 +2,7 @@
   "apiKey": "<API_KEY>",
   "baseUrl": "https://api.opsgenie.com",
   "logLevel": "DEBUG",
-  "globalArgs": [
-    "<list_of_args_you_want_to_pass_to_the_scripts>"
-  ],
+  "globalArgs": [],
   "globalFlags": {
     "command_url": "http://localhost:8080/zport/dmd/evconsole_router",
     "username": "Admin",
@@ -14,19 +12,13 @@
     "Acknowledge": {
       "filepath": "<path_of_script>",
       "sourceType": "<local | git>",
-      "environmentVariables": [
-        "e1=v1",
-        "e2=v2"
-      ],
+      "environmentVariables": [],
       "stdout": "<path_of_output_file_of_script>"
     },
     "Close": {
       "filepath": "<path_of_script>",
       "sourceType": "<local | git>",
-      "environmentVariables": [
-        "e1=v1",
-        "e2=v2"
-      ],
+      "environmentVariables": [],
       "stdout": "<path_of_output_file_of_script>"
     }
   },

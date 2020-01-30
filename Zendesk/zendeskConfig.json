@@ -2,9 +2,7 @@
   "apiKey": "<API_KEY>",
   "baseUrl": "https://api.opsgenie.com",
   "logLevel": "DEBUG",
-  "globalArgs": [
-    "<list_of_args_you_want_to_pass_to_the_scripts>"
-  ],
+  "globalArgs": [],
   "globalFlags": {
     "apiToken": "<api_token>",
     "zendeskEmail": "<zendesk_email>",
@@ -14,64 +12,43 @@
     "createTicket": {
       "filepath": "<path_of_script>",
       "sourceType": "<local | git>",
-      "environmentVariables": [
-        "e1=v1",
-        "e2=v2"
-      ],
+      "environmentVariables": [],
       "stdout": "<path_of_output_file_of_script>"
     },
     "addInternalComment": {
       "filepath": "<path_of_script>",
       "sourceType": "<local | git>",
-      "environmentVariables": [
-        "e1=v1",
-        "e2=v2"
-      ],
+      "environmentVariables": [],
       "stdout": "<path_of_output_file_of_script>"
     },
     "addPublicComment": {
       "filepath": "<path_of_script>",
       "sourceType": "<local | git>",
-      "environmentVariables": [
-        "e1=v1",
-        "e2=v2"
-      ],
+      "environmentVariables": [],
       "stdout": "<path_of_output_file_of_script>"
     },
     "setStatusToOpen": {
       "filepath": "<path_of_script>",
       "sourceType": "<local | git>",
-      "environmentVariables": [
-        "e1=v1",
-        "e2=v2"
-      ],
+      "environmentVariables": [],
       "stdout": "<path_of_output_file_of_script>"
     },
     "setStatusToPending": {
       "filepath": "<path_of_script>",
       "sourceType": "<local | git>",
-      "environmentVariables": [
-        "e1=v1",
-        "e2=v2"
-      ],
+      "environmentVariables": [],
       "stdout": "<path_of_output_file_of_script>"
     },
     "setStatusToSolved": {
       "filepath": "<path_of_script>",
       "sourceType": "<local | git>",
-      "environmentVariables": [
-        "e1=v1",
-        "e2=v2"
-      ],
+      "environmentVariables": [],
       "stdout": "<path_of_output_file_of_script>"
     },
     "setStatusToClosed": {
       "filepath": "<path_of_script>",
       "sourceType": "<local | git>",
-      "environmentVariables": [
-        "e1=v1",
-        "e2=v2"
-      ],
+      "environmentVariables": [],
       "stdout": "<path_of_output_file_of_script>"
     }
   },
