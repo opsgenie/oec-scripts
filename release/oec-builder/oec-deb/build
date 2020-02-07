@@ -11,9 +11,12 @@ cp -R $OEC_SCRIPTS_REPO/$INTEGRATION/. /oec-deb/home/opsgenie/oec && \
 INTEGRATION_PATH=$(echo "$INTEGRATION" | awk '{print tolower($0)}')
 
 ####incoming part#######
-go get -u github.com/alexcesaro/log && \
-cd /oec-deb/home/opsgenie/oec/${INTEGRATION_PATH} && \
-GOOS=linux GOARCH=amd64 go build -o send2opsgenie send2opsgenie.go && \
+INCOMING_PATH=/oec/${INTEGRATION_PATH}
+if [ -d "$INCOMING_PATH" ]; then
+  go get -u github.com/alexcesaro/log && \
+  cd /oec-deb/home/opsgenie/oec/${INTEGRATION_PATH} && \
+  GOOS=linux GOARCH=amd64 go build -o send2opsgenie send2opsgenie.go
+fi
 ########################
 
 sed -i "s|<path_of_script>|/home/opsgenie/oec/scripts/actionExecutor.py|" /oec-deb/home/opsgenie/oec/conf/config.json

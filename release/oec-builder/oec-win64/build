@@ -11,9 +11,12 @@ cp -R $OEC_SCRIPTS_REPO/$INTEGRATION/. /oec && \
 INTEGRATION_PATH=$(echo "$INTEGRATION" | awk '{print tolower($0)}')
 
 #########incoming part##########
-go get -u github.com/alexcesaro/log && \
-cd /oec/${INTEGRATION_PATH} && \
-GOOS=windows GOARCH=amd64 go build -o send2opsgenie send2opsgenie.go && \
+INCOMING_PATH=/oec/${INTEGRATION_PATH}
+if [ -d "$INCOMING_PATH" ]; then
+  go get -u github.com/alexcesaro/log && \
+  cd /oec/${INTEGRATION_PATH} && \
+  GOOS=windows GOARCH=amd64 go build -o send2opsgenie send2opsgenie.go
+fi
 ################################
 
 cd ~ && \
