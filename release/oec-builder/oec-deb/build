@@ -1,8 +1,9 @@
 #!/bin/bash
 
-#need to get executables from s3 and put under oec-deb
 mkdir -p /oec-deb/usr/local/bin
-cp $OEC_SCRIPTS_REPO/release/oec-builder/executables/OpsgenieEdgeConnector /oec-deb/usr/local/bin
+s3URL=https://og-release-cicd-public-oregon.s3-us-west-2.amazonaws.com/purpose%3Dpublic/project%3Doec-builder/env%3Dprod/branch%3D${BRANCH}/module%3Doec-builder/version%3D${OEC_VERSION}/oec-linux-${OEC_VERSION}.zip
+curl ${s3URL} --output ./oec.zip --silent --show-error --create-dirs
+unzip ./oec.zip -d /oec-deb/usr/local/bin
 
 cp -R $INPUT/. /oec-deb && \
 mkdir -p /oec-deb/home/opsgenie/oec/ && \
