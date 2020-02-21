@@ -290,7 +290,10 @@ def send_create_request():
 def post_to_icinga_api(post_params):
     url = get_url("command_url", "/icinga/cgi-bin/cmd.cgi")
     logging.debug(LOG_PREFIX + "Posting to Icinga. Url " + url + " params:" + str(post_params))
-    response = requests.post(url, post_params, timeout=HTTP_TIMEOUT, auth=auth_token)
+    headers = {
+        "Accept": "*/*"
+    }
+    response = requests.post(url, post_params, timeout=HTTP_TIMEOUT, auth=auth_token, headers=headers)
 
     if 200 <= response.status_code < 400:
         logging.info(LOG_PREFIX + " Successfully executed at Icinga.")
@@ -387,7 +390,7 @@ def main():
         "Authorization": "GenieKey " + args['apiKey']
     }
 
-    response = requests.get(get_alert_url, None, headers=headers, timeout=HTTP_TIMEOUT)
+    response = requests.get(get_alert_url, headers=headers, timeout=HTTP_TIMEOUT)
 
     content = response.json()
     print(content)

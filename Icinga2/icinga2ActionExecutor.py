@@ -49,7 +49,11 @@ def post_to_icingaApi(url_path, content_map):
     url = args["api_url"] + url_path
     logging.debug(LOG_PREFIX + " Posting to Icinga. Url " + url + ", content: " + str(content_map))
 
-    response = requests.post(url, json=content_map, timeout=HTTP_TIMEOUT, auth=auth_token)
+    headers = {
+        "Accept": "*/*"
+    }
+
+    response = requests.post(url, json=content_map, timeout=HTTP_TIMEOUT, auth=auth_token, headers=headers)
 
     if response.status_code == 200:
         logging.info(LOG_PREFIX + " Successfully executed at Icinga.")
@@ -334,7 +338,7 @@ def main():
         "Authorization": "GenieKey " + args['apiKey']
     }
 
-    response = requests.get(get_alert_url, None, headers=headers, timeout=HTTP_TIMEOUT)
+    response = requests.get(get_alert_url, headers=headers, timeout=HTTP_TIMEOUT)
 
     content = response.json()
     if "data" in content.keys():

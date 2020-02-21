@@ -4,9 +4,8 @@
   "logLevel": "DEBUG",
   "globalArgs": [],
   "globalFlags": {
-    "alert_histogram_image_url": "http://localhost/icinga/cgi-bin/histogram.cgi",
-    "trends_image_url": "http://localhost/icinga/cgi-bin/trends.cgi",
-    "command_url": "http://localhost/icinga/cgi-bin/cmd.cgi",
+    "graphite_url": "http://localhost:5003",
+    "api_url": "https://localhost:5665",
     "user": "icingaadmin",
     "password": "icingaadmin"
   },
