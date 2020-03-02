@@ -1,0 +1,43 @@
+#!/bin/sh
+
+# description: Opsgenie Edge Connector (OEC)
+#
+# Below is the source function library
+#
+. /etc/init.d/functions
+
+exec="/usr/local/bin/OpsgenieEdgeConnector"
+prog="OEC"
+config="/home/opsgenie/oec/conf/config.json"
+
+export OEC_CONF_SOURCE_TYPE="local"
+export OEC_CONF_LOCAL_FILEPATH="/home/opsgenie/oec/conf/config.json"
+
+start() {
+        echo -n "Starting  Opsgenie Edge Connector (OEC)"
+        $exec
+}
+
+stop() {
+        echo -n "Stopping Opsgenie Edge Connector (OEC)"
+        kill -15 $(pgrep -f OpsgenieEdgeConnector)
+}
+
+
+case "$1" in
+    start)
+        start
+    ;;
+    stop)
+        stop
+    ;;
+    restart)
+    echo -n "Restarting Opsgenie Edge Connector (OEC)"
+        stop
+        start
+    ;;
+    *)
+        echo "Usage: $0 {start|stop|restart}"
+        exit 1
+    ;;
+esac

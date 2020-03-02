@@ -1,0 +1,35 @@
+#!/bin/bash
+
+mkdir -p /oec-deb/usr/local/bin
+s3URL=https://og-release-cicd-public-oregon.s3-us-west-2.amazonaws.com/purpose%3Dpublic/project%3Doec-builder/env%3Dprod/branch%3D${BRANCH}/module%3Doec-builder/version%3D${OEC_VERSION}/oec-linux-${OEC_VERSION}.zip
+curl ${s3URL} --output ./oec.zip --silent --show-error --create-dirs
+unzip ./oec.zip -d /oec-deb/usr/local/bin
+
+cp -R $INPUT/. /oec-deb && \
+mkdir -p /oec-deb/home/opsgenie/oec/ && \
+cp -R $OEC_SCRIPTS_REPO/$INTEGRATION/. /oec-deb/home/opsgenie/oec && \
+
+INTEGRATION_PATH=$(echo "$INTEGRATION" | awk '{print tolower($0)}')
+
+####incoming part#######
+INCOMING_PATH=/oec/${INTEGRATION_PATH}
+if [ -d "$INCOMING_PATH" ]; then
+  go get -u github.com/alexcesaro/log && \
+  cd /oec-deb/home/opsgenie/oec/${INTEGRATION_PATH} && \
+  GOOS=linux GOARCH=amd64 go build -o send2opsgenie send2opsgenie.go
+fi
+########################
+
+sed -i "s|<path_of_script>|/home/opsgenie/oec/scripts/actionExecutor.py|" /oec-deb/home/opsgenie/oec/conf/config.json
+sed -i "s|<path_of_output_file_of_script>|/home/opsgenie/oec/output/output.txt|" /oec-deb/home/opsgenie/oec/conf/config.json
+sed -i "s/<local | git>/local/g" /oec-deb/home/opsgenie/oec/conf/config.json
+
+sed -i "s/%VERSION%/$OEC_VERSION/g" /oec-deb/DEBIAN/control && \
+sed -i "s/%INTEGRATION%/${INTEGRATION_PATH}/g" /oec-deb/DEBIAN/control && \
+
+cd ~ && \
+mkdir -p $OUTPUT/oec-packages-$OEC_VERSION/${INTEGRATION_PATH} && \
+
+mkdir /deb-package && \
+dpkg-deb -b /oec-deb /deb-package && \
+cp -R /deb-package/${INTEGRATION_PATH}* $OUTPUT/oec-packages-$OEC_VERSION/${INTEGRATION_PATH}/

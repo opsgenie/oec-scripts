@@ -1,0 +1,39 @@
+#!/bin/bash
+
+mkdir /rpmbuild
+s3URL=https://og-release-cicd-public-oregon.s3-us-west-2.amazonaws.com/purpose%3Dpublic/project%3Doec-builder/env%3Dprod/branch%3D${BRANCH}/module%3Doec-builder/version%3D${OEC_VERSION}/oec-linux-${OEC_VERSION}.zip
+curl ${s3URL} --output ./oec.zip --silent --show-error --create-dirs
+unzip ./oec.zip -d /rpmbuild
+
+cp -R $INPUT/. /rpmbuild && \
+cp -R $OEC_SCRIPTS_REPO/$INTEGRATION/. /rpmbuild/oec-scripts && \
+
+INTEGRATION_PATH=$(echo "$INTEGRATION" | awk '{print tolower($0)}')
+
+#########incoming part##########
+INCOMING_PATH=/oec/${INTEGRATION_PATH}
+if [ -d "$INCOMING_PATH" ]; then
+  go get -u github.com/alexcesaro/log && \
+  cd /rpmbuild/oec-scripts/${INTEGRATION_PATH} && \
+  GOOS=linux GOARCH=amd64 go build -o send2opsgenie send2opsgenie.go
+fi
+################################
+
+sed -i "s|<path_of_script>|$RPM_BUILD_ROOT/home/opsgenie/oec/scripts/actionExecutor.py|" /rpmbuild/oec-scripts/conf/config.json
+sed -i "s|<path_of_output_file_of_script>|$RPM_BUILD_ROOT/home/opsgenie/oec/output/output.txt|" /rpmbuild/oec-scripts/conf/config.json
+sed -i "s/<local | git>/local/g" /rpmbuild/oec-scripts/conf/config.json
+
+sed -i "s/%VERSION%/$OEC_VERSION/g" /rpmbuild/SPECS/oec.spec && \
+sed -i "s/%VERSION%/$OEC_VERSION/g" /rpmbuild/SPECS/oec-rhel6.spec && \
+
+sed -i "s/%INTEGRATION%/${INTEGRATION_PATH}/g" /rpmbuild/SPECS/oec.spec && \
+sed -i "s/%INTEGRATION%/${INTEGRATION_PATH}/g" /rpmbuild/SPECS/oec-rhel6.spec && \
+
+cd ~ && \
+mkdir -p $OUTPUT/oec-packages-$OEC_VERSION/${INTEGRATION_PATH} && \
+
+rpmbuild --target=x86_64 -ba /rpmbuild/SPECS/oec.spec && \
+cp -R /root/rpmbuild/RPMS/x86_64/${INTEGRATION_PATH}* $OUTPUT/oec-packages-$OEC_VERSION/${INTEGRATION_PATH}/ && \
+
+rpmbuild --target=x86_64 -ba /rpmbuild/SPECS/oec-rhel6.spec && \
+cp -R /root/rpmbuild/RPMS/x86_64/${INTEGRATION_PATH}* $OUTPUT/oec-packages-$OEC_VERSION/${INTEGRATION_PATH}/

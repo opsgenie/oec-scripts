@@ -1,0 +1,26 @@
+#!/bin/bash
+
+mkdir /oec-win32
+s3URL=https://og-release-cicd-public-oregon.s3-us-west-2.amazonaws.com/purpose%3Dpublic/project%3Doec-builder/env%3Dprod/branch%3D${BRANCH}/module%3Doec-builder/version%3D${OEC_VERSION}/oec-win32-${OEC_VERSION}.zip
+curl ${s3URL} --output ./oec.zip --silent --show-error --create-dirs
+unzip ./oec.zip -d /oec-win32
+
+cp -R $INPUT/oecService.json.example /oec-win32 && \
+cp -R $OEC_SCRIPTS_REPO/$INTEGRATION/. /oec-win32 && \
+
+INTEGRATION_PATH=$(echo "$INTEGRATION" | awk '{print tolower($0)}')
+
+#########incoming part##########
+INCOMING_PATH=/oec-win32/${INTEGRATION_PATH}
+if [ -d "$INCOMING_PATH" ]; then
+  go get -u github.com/alexcesaro/log && \
+  cd ${INCOMING_PATH} && \
+  GOOS=windows GOARCH=386 go build -o send2opsgenie send2opsgenie.go
+fi
+################################
+
+cd ~ && \
+mkdir -p $OUTPUT/oec-packages-$OEC_VERSION/${INTEGRATION_PATH} && \
+
+zip -r ${INTEGRATION_PATH}-$OEC_VERSION-win-386.zip /oec-win32 && \
+cp -R ${INTEGRATION_PATH}* $OUTPUT/oec-packages-$OEC_VERSION/${INTEGRATION_PATH}/

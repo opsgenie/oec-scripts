@@ -1,0 +1,14 @@
+[Unit]
+Description=Opsgenie Edge Connector (OEC)
+
+[Service]
+Group=opsgenie
+User=opsgenie
+Type=simple
+ExecStart=/usr/local/bin/OpsgenieEdgeConnector
+
+Environment="OEC_CONF_SOURCE_TYPE=local"
+Environment="OEC_CONF_LOCAL_FILEPATH=/home/opsgenie/oec/conf/config.json"
+
+[Install]
+WantedBy=multi-user.target
