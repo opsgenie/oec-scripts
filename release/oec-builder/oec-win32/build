@@ -15,7 +15,7 @@ INCOMING_PATH=/oec-win32/${INTEGRATION_PATH}
 if [ -d "$INCOMING_PATH" ]; then
   go get -u github.com/alexcesaro/log && \
   cd ${INCOMING_PATH} && \
-  GOOS=windows GOARCH=386 go build -o send2opsgenie send2opsgenie.go
+  GOOS=windows GOARCH=386 go build -o send2opsgenie32.exe send2opsgenie.go
 fi
 ################################
 
