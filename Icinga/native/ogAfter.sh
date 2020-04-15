@@ -1,5 +1,5 @@
 
-chmod 755 /usr/bin/icinga2opsgenie
+chmod 755 /home/opsgenie/oec/icinga/send2opsgenie
 
 
 if id -u icinga >/dev/null 2>&1; then

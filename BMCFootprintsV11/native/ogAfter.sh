@@ -1,2 +1,2 @@
 
-chmod 755 /usr/bin/bmcFootPrints2opsgenie
+chmod 755 /home/opsgenie/oec/bmcfootprintsv11/send2opsgenie
