@@ -8,7 +8,7 @@ else
 fi
 
 if [ -d "/usr/local/nagios/etc/objects" ]; then
-    cp /etc/opsgenie/opsgenie.cfg  /usr/local/nagios/etc/objects/
+    cp /etc/opsgenie/opsgenie.cfg /usr/local/nagios/etc/objects/
 else
         echo "WARNING : Could not find your NAGIOS_HOME directory. Please copy /etc/opsgenie/opsgenie.cfg file to your <NAGIOS_HOME>/etc/objects directory manually!"
 fi

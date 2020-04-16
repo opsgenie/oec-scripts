@@ -10,7 +10,7 @@ else
 fi
 
 if [ -d "/usr/local/icinga/etc/objects" ]; then
-    cp /etc/opsgenie/opsgenie.cfg  /usr/local/icinga/etc/objects/
+    cp /etc/opsgenie/opsgenie.cfg /usr/local/icinga/etc/objects/
 else
         echo "WARNING : Could not find your ICINGA_HOME directory. Please copy /etc/opsgenie/opsgenie.cfg file to your <ICINGA_HOME>/etc/objects directory manually!"
 fi

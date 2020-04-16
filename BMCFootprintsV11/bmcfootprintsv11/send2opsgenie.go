@@ -36,7 +36,7 @@ var configParameters = map[string]string{"apiKey": "",
 	"bmcFootPrints2opsgenie.http.proxy.username": "",
 	"bmcFootPrints2opsgenie.http.proxy.password": ""}
 var parameters = make(map[string]string)
-var logPrefix = "[bmcFootPrints2opsgenie] "
+var logPrefix = "[send2opsgenie] "
 var bmcFootPrintsWebServiceURL string
 
 var configPath string
@@ -308,9 +308,9 @@ func configureLogger() log.Logger {
 
 	if len(logFilePath) == 0 {
 		if runtime.GOOS == "windows" {
-			logFilePath = "C:\\opsgenie-integration\\bmcFootPrints2opsgenie.log"
+			logFilePath = "C:\\opsgenie\\oec\\bmcfootprintsv11\\send2opsgenie.log"
 		} else {
-			logFilePath = "/var/log/opsgenie/bmcFootPrints2opsgenie.log"
+			logFilePath = "/var/log/opsgenie/send2opsgenie.log"
 		}
 	}
 
@@ -322,9 +322,9 @@ func configureLogger() log.Logger {
 		var tmpLogFilePath string
 
 		if runtime.GOOS == "windows" {
-			tmpLogFilePath = "C:\\Windows\\Temp\\bmcFootPrints2opsgenie.log"
+			tmpLogFilePath = "C:\\Windows\\Temp\\send2opsgenie.log"
 		} else {
-			tmpLogFilePath = "/tmp/bmcFootPrints2opsgenie.log"
+			tmpLogFilePath = "/tmp/send2opsgenie.log"
 		}
 
 		fmt.Println("Could not create log file \""+logFilePath+"\", will log to \""+tmpLogFilePath+"\" file. Error: ", err)

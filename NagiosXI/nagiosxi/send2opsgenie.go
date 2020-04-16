@@ -150,7 +150,7 @@ func configureLogger() log.Logger {
 	var logFilePath = parameters["logPath"]
 
 	if len(logFilePath) == 0 {
-		logFilePath = "/var/log/opsgenie/nagios2opsgenie.log"
+		logFilePath = "/var/log/opsgenie/send2opsgenie.log"
 	}
 
 	var tmpLogger log.Logger
@@ -158,9 +158,9 @@ func configureLogger() log.Logger {
 	file, err := os.OpenFile(logFilePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 
 	if err != nil {
-		fmt.Println("Could not create log file \""+logFilePath+"\", will log to \"/tmp/nagios2opsgenie.log\" file. Error: ", err)
+		fmt.Println("Could not create log file \""+logFilePath+"\", will log to \"/tmp/send2opsgenie.log\" file. Error: ", err)
 
-		fileTmp, errTmp := os.OpenFile("/tmp/nagios2opsgenie.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+		fileTmp, errTmp := os.OpenFile("/tmp/send2opsgenie.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 
 		if errTmp != nil {
 			fmt.Println("Logging disabled. Reason: ", errTmp)
