@@ -257,7 +257,7 @@ func http_post(jsonBody []byte, incidentID string) {
 }
 
 func configureLogger(logFilePath string) log.Logger {
-	logFilePath += "\\bmcremedy2opsgenie.log"
+	logFilePath += "\\send2opsgenie.log"
 	var tmpLogger log.Logger
 	file, err := os.OpenFile(logFilePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 
