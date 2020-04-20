@@ -149,7 +149,7 @@ def login():
         'username': username,
         'password': password}
 
-    response = requests.post(api_url + '/token', data=json.dumps(params), headers=headers, timeout=HTTP_TIMEOUT)
+    response = requests.post(api_url + '/token', data=params, headers=headers, timeout=HTTP_TIMEOUT)
     if response.json():
         response_body = response.json()
         if response.status_code < 300 and response_body.get('access_token'):
