@@ -4,8 +4,7 @@
   "logLevel": "DEBUG",
   "globalArgs": [],
   "globalFlags": {
-    "hostUrl": "<your_service_name>",
-    "username": "<username>",
+    "jid": "<jid>",
     "password": "<password>",
     "room": "<room_name>"
   },

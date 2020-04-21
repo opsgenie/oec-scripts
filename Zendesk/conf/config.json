@@ -6,7 +6,7 @@
   "globalFlags": {
     "apiToken": "<api_token>",
     "zendeskEmail": "<zendesk_email>",
-    "zendeskUrl": "<zendesk_url>"
+    "subdomain": "<subdomain>"
   },
   "actionMappings": {
     "createTicket": {
