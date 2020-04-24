@@ -1,5 +1,5 @@
 
-chmod 755 /home/opsgenie/oec/nagiosxi/send2opsgenie
+chmod 755 /home/opsgenie/oec/opsgenie-nagiosxi/send2opsgenie
 
 if id -u nagios >/dev/null 2>&1; then
         usermod -a -G opsgenie nagios

@@ -1,4 +1,4 @@
-chmod 755 /home/opsgenie/oec/zabbix/send2opsgenie
+chmod 755 /home/opsgenie/oec/opsgenie-zabbix/send2opsgenie
 
 if id -u zabbix >/dev/null 2>&1; then
         usermod -a -G opsgenie zabbix

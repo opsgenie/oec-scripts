@@ -1,5 +1,5 @@
 
-chmod 755 /home/opsgenie/oec/icinga2/send2opsgenie
+chmod 755 /home/opsgenie/oec/opsgenie-icinga2/send2opsgenie
 
 if id -u icinga >/dev/null 2>&1; then
         usermod -a -G opsgenie icinga

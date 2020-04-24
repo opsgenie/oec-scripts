@@ -1,6 +1,6 @@
 #!/bin/bash
 
-mkdir /rpmbuild
+mkdir -p /rpmbuild
 s3URL=https://og-release-cicd-public-oregon.s3-us-west-2.amazonaws.com/purpose%3Dpublic/project%3Doec-builder/env%3Dprod/branch%3D${BRANCH}/module%3Doec-builder/version%3D${OEC_VERSION}/oec-linux-${OEC_VERSION}.zip
 curl ${s3URL} --output ./oec.zip --silent --show-error --create-dirs
 unzip ./oec.zip -d /rpmbuild
@@ -8,7 +8,13 @@ unzip ./oec.zip -d /rpmbuild
 cp -R $INPUT/. /rpmbuild && \
 cp -R $OEC_SCRIPTS_REPO/$INTEGRATION/. /rpmbuild/oec-scripts && \
 
-INTEGRATION_PATH=$(echo "$INTEGRATION" | awk '{print tolower($0)}')
+cp $OEC_SCRIPTS_REPO/release/oec-builder/oecScriptsVersion.json /rpmbuild/oec-scripts && \
+
+INTEGRATION_VERSION=($(jq -r --arg v "$INTEGRATION" '.[$v]' /rpmbuild/oec-scripts/oecScriptsVersion.json))
+rm /rpmbuild/oec-scripts/oecScriptsVersion.json && \
+
+INTEGRATION_NAME=$(echo "$INTEGRATION" | awk '{print tolower($0)}')
+INTEGRATION_PATH=opsgenie-${INTEGRATION_NAME}
 
 #########incoming part##########
 INCOMING_PATH=/rpmbuild/oec-scripts/${INTEGRATION_PATH}
@@ -23,8 +29,8 @@ sed -i "s|<path_of_script>|$RPM_BUILD_ROOT/home/opsgenie/oec/scripts/actionExecu
 sed -i "s|<path_of_output_file_of_script>|$RPM_BUILD_ROOT/home/opsgenie/oec/output/output.txt|" /rpmbuild/oec-scripts/conf/config.json
 sed -i "s/<local | git>/local/g" /rpmbuild/oec-scripts/conf/config.json
 
-sed -i "s/%VERSION%/$OEC_VERSION/g" /rpmbuild/SPECS/oec.spec && \
-sed -i "s/%VERSION%/$OEC_VERSION/g" /rpmbuild/SPECS/oec-rhel6.spec && \
+sed -i "s/%VERSION%/${INTEGRATION_VERSION}/g" /rpmbuild/SPECS/oec.spec && \
+sed -i "s/%VERSION%/${INTEGRATION_VERSION}/g" /rpmbuild/SPECS/oec-rhel6.spec && \
 
 sed -i "s/%INTEGRATION%/${INTEGRATION_PATH}/g" /rpmbuild/SPECS/oec.spec && \
 sed -i "s/%INTEGRATION%/${INTEGRATION_PATH}/g" /rpmbuild/SPECS/oec-rhel6.spec && \
@@ -33,7 +39,7 @@ cd ~ && \
 mkdir -p $OUTPUT/oec-packages-$OEC_VERSION/${INTEGRATION_PATH} && \
 
 rpmbuild --target=x86_64 -ba /rpmbuild/SPECS/oec.spec && \
-cp -R /root/rpmbuild/RPMS/x86_64/${INTEGRATION_PATH}* $OUTPUT/oec-packages-$OEC_VERSION/${INTEGRATION_PATH}/ && \
+cp -R /root/rpmbuild/RPMS/x86_64/${INTEGRATION_PATH}* $OUTPUT/oec-packages-$OEC_VERSION/${INTEGRATION_PATH} && \
 
 rpmbuild --target=x86_64 -ba /rpmbuild/SPECS/oec-rhel6.spec && \
 cp -R /root/rpmbuild/RPMS/x86_64/${INTEGRATION_PATH}* $OUTPUT/oec-packages-$OEC_VERSION/${INTEGRATION_PATH}/
