@@ -10,7 +10,7 @@ mkdir -p /oec-deb/home/opsgenie/oec/ && \
 cp -R $OEC_SCRIPTS_REPO/$INTEGRATION/. /oec-deb/home/opsgenie/oec && \
 cp $OEC_SCRIPTS_REPO/release/oec-builder/oecScriptsVersion.json /oec-deb/home/opsgenie/oec && \
 
-INTEGRATION_VERSION=($(jq -r --arg v "$INTEGRATION" '.[$v]' /oec-deb/home/opsgenie/oec/oecScriptsVersion.json))
+INTEGRATION_VERSION=$(jq -r --arg v "$INTEGRATION" '.[$v]' /oec-deb/home/opsgenie/oec/oecScriptsVersion.json)
 rm /oec-deb/home/opsgenie/oec/oecScriptsVersion.json && \
 
 INTEGRATION_NAME=$(echo "$INTEGRATION" | awk '{print tolower($0)}')

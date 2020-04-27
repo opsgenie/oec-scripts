@@ -10,7 +10,7 @@ cp -R $OEC_SCRIPTS_REPO/$INTEGRATION/. /rpmbuild/oec-scripts && \
 
 cp $OEC_SCRIPTS_REPO/release/oec-builder/oecScriptsVersion.json /rpmbuild/oec-scripts && \
 
-INTEGRATION_VERSION=($(jq -r --arg v "$INTEGRATION" '.[$v]' /rpmbuild/oec-scripts/oecScriptsVersion.json))
+INTEGRATION_VERSION=$(jq -r --arg v "$INTEGRATION" '.[$v]' /rpmbuild/oec-scripts/oecScriptsVersion.json)
 rm /rpmbuild/oec-scripts/oecScriptsVersion.json && \
 
 INTEGRATION_NAME=$(echo "$INTEGRATION" | awk '{print tolower($0)}')

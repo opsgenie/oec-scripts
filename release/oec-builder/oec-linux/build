@@ -8,7 +8,7 @@ unzip ./oec.zip -d /oec-linux
 cp -R $OEC_SCRIPTS_REPO/$INTEGRATION/. /oec-linux && \
 cp $OEC_SCRIPTS_REPO/release/oec-builder/oecScriptsVersion.json /oec-linux && \
 
-INTEGRATION_VERSION=($(jq -r --arg v "$INTEGRATION" '.[$v]' /oec-linux/oecScriptsVersion.json))
+INTEGRATION_VERSION=$(jq -r --arg v "$INTEGRATION" '.[$v]' /oec-linux/oecScriptsVersion.json)
 rm /oec-linux/oecScriptsVersion.json && \
 
 INTEGRATION_NAME=$(echo "$INTEGRATION" | awk '{print tolower($0)}')

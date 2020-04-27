@@ -9,7 +9,7 @@ cp -R $INPUT/oecService.json.example /oec-win64 && \
 cp -R $OEC_SCRIPTS_REPO/$INTEGRATION/. /oec-win64 && \
 cp $OEC_SCRIPTS_REPO/release/oec-builder/oecScriptsVersion.json /oec-win64 && \
 
-INTEGRATION_VERSION=($(jq -r --arg v "$INTEGRATION" '.[$v]' /oec-win64/oecScriptsVersion.json))
+INTEGRATION_VERSION=$(jq -r --arg v "$INTEGRATION" '.[$v]' /oec-win64/oecScriptsVersion.json)
 rm /oec-win64/oecScriptsVersion.json && \
 
 INTEGRATION_NAME=$(echo "$INTEGRATION" | awk '{print tolower($0)}')
