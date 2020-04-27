@@ -4,9 +4,15 @@ mkdir /oec-linux
 s3URL=https://og-release-cicd-public-oregon.s3-us-west-2.amazonaws.com/purpose%3Dpublic/project%3Doec-builder/env%3Dprod/branch%3D${BRANCH}/module%3Doec-builder/version%3D${OEC_VERSION}/oec-linux-${OEC_VERSION}.zip
 curl ${s3URL} --output ./oec.zip --silent --show-error --create-dirs
 unzip ./oec.zip -d /oec-linux
-cp -R $OEC_SCRIPTS_REPO/$INTEGRATION/. /oec-linux
 
-INTEGRATION_PATH=$(echo "$INTEGRATION" | awk '{print tolower($0)}')
+cp -R $OEC_SCRIPTS_REPO/$INTEGRATION/. /oec-linux && \
+cp $OEC_SCRIPTS_REPO/release/oec-builder/oecScriptsVersion.json /oec-linux && \
+
+INTEGRATION_VERSION=$(jq -r --arg v "$INTEGRATION" '.[$v]' /oec-linux/oecScriptsVersion.json)
+rm /oec-linux/oecScriptsVersion.json && \
+
+INTEGRATION_NAME=$(echo "$INTEGRATION" | awk '{print tolower($0)}')
+INTEGRATION_PATH=opsgenie-${INTEGRATION_NAME}
 
 #########incoming part##########
 INCOMING_PATH=/oec-linux/${INTEGRATION_PATH}
@@ -19,6 +25,8 @@ fi
 
 cd ~ && \
 mkdir -p $OUTPUT/oec-packages-$OEC_VERSION/${INTEGRATION_PATH} && \
+mkdir /${INTEGRATION_PATH} && \
+mv /oec-linux/* /${INTEGRATION_PATH} && \
 
-zip -r ${INTEGRATION_PATH}-$OEC_VERSION-linux-amd64.zip /oec-linux  && \
+zip -r ${INTEGRATION_PATH}-${INTEGRATION_VERSION}-linux-amd64.zip /${INTEGRATION_PATH}  && \
 cp -R ${INTEGRATION_PATH}* $OUTPUT/oec-packages-$OEC_VERSION/${INTEGRATION_PATH}/

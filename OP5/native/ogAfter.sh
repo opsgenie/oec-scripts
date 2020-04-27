@@ -1,5 +1,5 @@
 
-chmod 755 /home/opsgenie/oec/op5/send2opsgenie
+chmod 755 /home/opsgenie/oec/opsgenie-op5/send2opsgenie
 
 
 if id -u nagios >/dev/null 2>&1; then

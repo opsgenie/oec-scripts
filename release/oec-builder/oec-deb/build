@@ -8,8 +8,13 @@ unzip ./oec.zip -d /oec-deb/usr/local/bin
 cp -R $INPUT/. /oec-deb && \
 mkdir -p /oec-deb/home/opsgenie/oec/ && \
 cp -R $OEC_SCRIPTS_REPO/$INTEGRATION/. /oec-deb/home/opsgenie/oec && \
+cp $OEC_SCRIPTS_REPO/release/oec-builder/oecScriptsVersion.json /oec-deb/home/opsgenie/oec && \
 
-INTEGRATION_PATH=$(echo "$INTEGRATION" | awk '{print tolower($0)}')
+INTEGRATION_VERSION=$(jq -r --arg v "$INTEGRATION" '.[$v]' /oec-deb/home/opsgenie/oec/oecScriptsVersion.json)
+rm /oec-deb/home/opsgenie/oec/oecScriptsVersion.json && \
+
+INTEGRATION_NAME=$(echo "$INTEGRATION" | awk '{print tolower($0)}')
+INTEGRATION_PATH=opsgenie-${INTEGRATION_NAME}
 
 ####incoming part#######
 INCOMING_PATH=/oec-deb/home/opsgenie/oec/${INTEGRATION_PATH}
@@ -24,12 +29,14 @@ sed -i "s|<path_of_script>|/home/opsgenie/oec/scripts/actionExecutor.py|" /oec-d
 sed -i "s|<path_of_output_file_of_script>|/home/opsgenie/oec/output/output.txt|" /oec-deb/home/opsgenie/oec/conf/config.json
 sed -i "s/<local | git>/local/g" /oec-deb/home/opsgenie/oec/conf/config.json
 
-sed -i "s/%VERSION%/$OEC_VERSION/g" /oec-deb/DEBIAN/control && \
+sed -i "s/%VERSION%/${INTEGRATION_VERSION}/g" /oec-deb/DEBIAN/control && \
 sed -i "s/%INTEGRATION%/${INTEGRATION_PATH}/g" /oec-deb/DEBIAN/control && \
 
 cd ~ && \
 mkdir -p $OUTPUT/oec-packages-$OEC_VERSION/${INTEGRATION_PATH} && \
+mkdir /${INTEGRATION_PATH} && \
+mv /oec-deb/* /${INTEGRATION_PATH} && \
 
 mkdir /deb-package && \
-dpkg-deb -b /oec-deb /deb-package && \
+dpkg-deb -b /${INTEGRATION_PATH} /deb-package && \
 cp -R /deb-package/${INTEGRATION_PATH}* $OUTPUT/oec-packages-$OEC_VERSION/${INTEGRATION_PATH}/

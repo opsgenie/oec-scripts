@@ -7,8 +7,13 @@ unzip ./oec.zip -d /oec-win64
 
 cp -R $INPUT/oecService.json.example /oec-win64 && \
 cp -R $OEC_SCRIPTS_REPO/$INTEGRATION/. /oec-win64 && \
+cp $OEC_SCRIPTS_REPO/release/oec-builder/oecScriptsVersion.json /oec-win64 && \
 
-INTEGRATION_PATH=$(echo "$INTEGRATION" | awk '{print tolower($0)}')
+INTEGRATION_VERSION=$(jq -r --arg v "$INTEGRATION" '.[$v]' /oec-win64/oecScriptsVersion.json)
+rm /oec-win64/oecScriptsVersion.json && \
+
+INTEGRATION_NAME=$(echo "$INTEGRATION" | awk '{print tolower($0)}')
+INTEGRATION_PATH=opsgenie-${INTEGRATION_NAME}
 
 #########incoming part##########
 INCOMING_PATH=/oec-win64/${INTEGRATION_PATH}
@@ -21,6 +26,8 @@ fi
 
 cd ~ && \
 mkdir -p $OUTPUT/oec-packages-$OEC_VERSION/${INTEGRATION_PATH} && \
+mkdir /${INTEGRATION_PATH} && \
+mv /oec-win64/* /${INTEGRATION_PATH} && \
 
-zip -r ${INTEGRATION_PATH}-$OEC_VERSION-win-amd64.zip /oec-win64  && \
+zip -r ${INTEGRATION_PATH}-$INTEGRATION_VERSION-win-amd64.zip /${INTEGRATION_PATH}  && \
 cp -R ${INTEGRATION_PATH}* $OUTPUT/oec-packages-$OEC_VERSION/${INTEGRATION_PATH}/

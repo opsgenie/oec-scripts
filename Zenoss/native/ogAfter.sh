@@ -1,4 +1,4 @@
-chmod 755 /home/opsgenie/oec/zenoss/send2opsgenie
+chmod 755 /home/opsgenie/oec/opsgenie-zenoss/send2opsgenie
 
 if id -u zenoss >/dev/null 2>&1; then
         usermod -a -G opsgenie zenoss
