@@ -1,6 +1,7 @@
 [Unit]
 Description=Opsgenie Edge Connector (OEC)
-After=network.target
+Wants=network-online.target
+After=network.target network-online.target
 
 [Service]
 Group=opsgenie
