@@ -69,17 +69,17 @@ class MemoryStore:
 
 
 class BusinessObjectField:
-    def __init__(self, dirty, display_name, field_id, name, value):
+    def __init__(self, dirty, displayName, fieldId, name, value):
         self.dirty = dirty
-        self.display_name = display_name
-        self.field_id = field_id
+        self.displayName = displayName
+        self.fieldId = fieldId
         self.name = name
         self.value = value
 
 
 class Condition:
-    def __init__(self, field_id, operator, value):
-        self.field_id = field_id
+    def __init__(self, fieldId, operator, value):
+        self.fieldId = fieldId
         self.operator = operator
         self.value = value
 
@@ -196,11 +196,11 @@ def create_incident():
     owned_by_description_field_id = get_field_id(incident_bus_ob_id, INCIDENT_TEMPLATE, 'Owned By')
 
     fields = []
-    fields.append(BusinessObjectField(dirty=True, display_name='Description', field_id=description_field_id, name='Description', value=get_description()).__dict__)
-    fields.append(BusinessObjectField(dirty=True, display_name='Priority', field_id=priority_field_id, name='Priority', value=convert_priority(queue_message.get('priority'))).__dict__)
-    fields.append(BusinessObjectField(dirty=True, display_name='Customer ID', field_id=customer_id_field_id, name='CustomerRecID', value=get_og_customer_id()).__dict__)
-    fields.append(BusinessObjectField(dirty=True, display_name='Short Description', field_id=short_description_field_id, name='ShortDescription', value=queue_message.get('err_message')).__dict__)
-    fields.append(BusinessObjectField(dirty=True, display_name='Owned By', field_id=owned_by_description_field_id, name='OwnedBy', value='OpsGenie').__dict__)
+    fields.append(BusinessObjectField(dirty=True, displayName='Description', fieldId=description_field_id, name='Description', value=get_description()).__dict__)
+    fields.append(BusinessObjectField(dirty=True, displayName='Priority', fieldId=priority_field_id, name='Priority', value=convert_priority(queue_message.get('priority'))).__dict__)
+    fields.append(BusinessObjectField(dirty=True, displayName='Customer ID', fieldId=customer_id_field_id, name='CustomerRecID', value=get_og_customer_id()).__dict__)
+    fields.append(BusinessObjectField(dirty=True, displayName='Short Description', fieldId=short_description_field_id, name='ShortDescription', value=queue_message.get('err_message')).__dict__)
+    fields.append(BusinessObjectField(dirty=True, displayName='Owned By', fieldId=owned_by_description_field_id, name='OwnedBy', value='OpsGenie').__dict__)
 
     payload = {
         'busObId': incident_bus_ob_id,
@@ -230,10 +230,10 @@ def set_incident_status(status):
     status_field_id = get_field_id(incident_bus_ob_id, INCIDENT_TEMPLATE, 'Status')
 
     fields = []
-    fields.append(BusinessObjectField(dirty=True, display_name='Status', field_id=status_field_id, name='Status', value=status).__dict__)
+    fields.append(BusinessObjectField(dirty=True, displayName='Status', fieldId=status_field_id, name='Status', value=status).__dict__)
     if not incident_has_owner(queue_message.get('incidentPublicId')):
         owned_by_description_field_id = get_field_id(incident_bus_ob_id, INCIDENT_TEMPLATE, 'Owned By')
-        fields.append(BusinessObjectField(dirty=True, display_name='Owned By', field_id=owned_by_description_field_id, name='Owned By', value='OpsGenie').__dict__)
+        fields.append(BusinessObjectField(dirty=True, displayName='Owned By', fieldId=owned_by_description_field_id, name='Owned By', value='OpsGenie').__dict__)
 
     payload = {
         'busObId': incident_bus_ob_id,
@@ -265,8 +265,8 @@ def add_journal_to_incident():
     incident_journal_relationship_id = get_incident_journal_relationship_id()
 
     fields = []
-    fields.append(BusinessObjectField(dirty=True, display_name='Journal TypeID', field_id=journal_type_id_field_id, name='JournalTypeID', value=journal_note_bus_ob_id).__dict__)
-    fields.append(BusinessObjectField(dirty=True, display_name='Details', field_id=journal_details_field_id, name='Details', value=queue_message.get('journalNote')).__dict__)
+    fields.append(BusinessObjectField(dirty=True, displayName='Journal TypeID', fieldId=journal_type_id_field_id, name='JournalTypeID', value=journal_note_bus_ob_id).__dict__)
+    fields.append(BusinessObjectField(dirty=True, displayName='Details', fieldId=journal_details_field_id, name='Details', value=queue_message.get('journalNote')).__dict__)
 
     payload = {}
     payload['fields'] = fields
@@ -390,7 +390,7 @@ def retrieve_og_customer_id():
 
             search_payload = {}
             search_payload['busObId'] = customer_bus_ob_id
-            search_payload['filters'] = [Condition(field_id=full_name_field_id, operator='eq', value='OpsGenie').__dict__]
+            search_payload['filters'] = [Condition(fieldId=full_name_field_id, operator='eq', value='OpsGenie').__dict__]
             search_payload['includeAllFields'] = True
 
             search_response = requests.post(api_url + '/api/V1/getsearchresults', data=json.dumps(search_payload), headers=headers, timeout=HTTP_TIMEOUT)
