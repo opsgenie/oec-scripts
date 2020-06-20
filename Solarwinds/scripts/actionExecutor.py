@@ -17,6 +17,7 @@ parser.add_argument('-login', '--login', help='Name of Solarwinds user that can 
 parser.add_argument('-password', '--password', help='Password for Solarwinds user that can acknowledge alerts',
                     required=False)
 parser.add_argument('-timeout', '--timeout', help='Timeout', required=False)
+parser.add_argument('-verifySsl', '--verifySsl', help='Verify SSL certificate returned by server?', required=False)
 
 args = vars(parser.parse_args())
 
@@ -48,7 +49,7 @@ def acknowledge_solarwinds_alert(url, auth_token, object_id, comment):
     logging.warning("Acknowledgement details: " + content)
 
     response = requests.post(endpoint, data=content, headers={"Content-Type": "application/json"}, auth=auth_token,
-                             timeout=timeout)
+                             timeout=timeout, verify=verifySsl)
 
     if response.status_code < 299:
         logging.info(LOG_PREFIX + " Successfully executed at Solarwinds.")
@@ -67,7 +68,7 @@ def close_solarwinds_alert(url, auth_token, object_id, comment):
     logging.warning("Close details: " + content)
 
     response = requests.post(endpoint, data=content, headers={"Content-Type": "application/json"}, auth=auth_token,
-                             timeout=timeout)
+                             timeout=timeout, verify=verifySsl)
 
     if response.status_code < 299:
         logging.info(LOG_PREFIX + " Successfully executed at Solarwinds.")
@@ -88,7 +89,7 @@ def add_note_solarwinds_alert(url, auth_token, object_id, comment):
     logging.warning("Close details: " + content)
 
     response = requests.post(endpoint, data=content, headers={"Content-Type": "application/json"}, auth=auth_token,
-                             timeout=timeout)
+                             timeout=timeout, verify=verifySsl)
 
     if response.status_code < 299:
         logging.info(LOG_PREFIX + " Successfully executed at Solarwinds.")
@@ -114,14 +115,21 @@ def main():
     password = parse_field('password', True)
     url = parse_field('url', True)
     timeout = args['timeout']
+    verifySsl = args['verifySsl']
 
     if not timeout:
         timeout = 30000
     else:
         timeout = int(timeout)
+        
+    if not verifySsl:
+        verifySsl = False
+    else:
+        verifySsl = False if verifySsl.lower() == "false" else True
 
     logging.debug("Username: " + username)
     logging.debug("Password: " + password)
+    logging.debug("VerifySSL: " + str(verifySsl))
 
     auth_token = HTTPBasicAuth(username, password)
 
