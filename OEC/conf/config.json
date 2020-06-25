@@ -8,7 +8,7 @@
   "globalFlags": {
   },
   "actionMappings": {
-    "create": {
+    "Create": {
       "filepath": "<path_of_script>",
       "sourceType": "<local | git>",
       "environmentVariables": [
