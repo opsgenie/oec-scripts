@@ -199,7 +199,7 @@ def create_incident():
     fields.append(BusinessObjectField(dirty=True, displayName='Description', fieldId=description_field_id, name='Description', value=get_description()).__dict__)
     fields.append(BusinessObjectField(dirty=True, displayName='Priority', fieldId=priority_field_id, name='Priority', value=convert_priority(queue_message.get('priority'))).__dict__)
     fields.append(BusinessObjectField(dirty=True, displayName='Customer ID', fieldId=customer_id_field_id, name='CustomerRecID', value=get_og_customer_id()).__dict__)
-    fields.append(BusinessObjectField(dirty=True, displayName='Short Description', fieldId=short_description_field_id, name='ShortDescription', value=queue_message.get('err_message')).__dict__)
+    fields.append(BusinessObjectField(dirty=True, displayName='Short Description', fieldId=short_description_field_id, name='ShortDescription', value=queue_message.get('message')).__dict__)
     fields.append(BusinessObjectField(dirty=True, displayName='Owned By', fieldId=owned_by_description_field_id, name='OwnedBy', value='OpsGenie').__dict__)
 
     payload = {
