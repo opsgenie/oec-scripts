@@ -3,7 +3,10 @@
     "baseUrl" : "https://api.opsgenie.com",
     "logLevel" : "DEBUG",
     "globalArgs" : [],
-    "globalFlags" : {},
+    "globalFlags" : {
+        "url": "<url>",
+        "token": "<token>"
+    },
     "globalEnv" : [],
     "actionMappings" : {
         "createEvent" : {
