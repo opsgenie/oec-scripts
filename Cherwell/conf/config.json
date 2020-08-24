@@ -13,25 +13,25 @@
     "addJournal": {
       "filepath": "<path_of_script>",
       "sourceType": "<local | git>",
-      "environmentVariables": [],
+      "env": [],
       "stdout": "<path_of_output_file_of_script>"
     },
     "createIncident": {
       "filepath": "<path_of_script>",
       "sourceType": "<local | git>",
-      "environmentVariables": [],
+      "env": [],
       "stdout": "<path_of_output_file_of_script>"
     },
     "inProgressIncident": {
       "filepath": "<path_of_script>",
       "sourceType": "<local | git>",
-      "environmentVariables": [],
+      "env": [],
       "stdout": "<path_of_output_file_of_script>"
     },
     "resolveIncident": {
       "filepath": "<path_of_script>",
       "sourceType": "<local | git>",
-      "environmentVariables": [],
+      "env": [],
       "stdout": "<path_of_output_file_of_script>"
     }
   },

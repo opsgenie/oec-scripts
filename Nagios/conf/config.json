@@ -16,7 +16,7 @@
     "Create": {
       "filepath": "<path_of_script>",
       "sourceType": "local",
-      "environmentVariables": [
+      "env": [
         "e1=v1",
         "e2=v2"
       ],
@@ -25,7 +25,7 @@
     "Acknowledge": {
       "filepath": "<path_of_script>",
       "sourceType": "local",
-      "environmentVariables": [
+      "env": [
         "e1=v1",
         "e2=v2"
       ],
@@ -34,7 +34,7 @@
     "AddNote": {
       "filepath": "<path_of_script>",
       "sourceType": "local",
-      "environmentVariables": [
+      "env": [
         "e1=v1",
         "e2=v2"
       ],
@@ -43,7 +43,7 @@
     "TakeOwnership": {
       "filepath": "<path_of_script>",
       "sourceType": "local",
-      "environmentVariables": [
+      "env": [
         "e1=v1",
         "e2=v2"
       ],
@@ -52,7 +52,7 @@
     "AssignOwnership": {
       "filepath": "<path_of_script>",
       "sourceType": "local",
-      "environmentVariables": [
+      "env": [
         "e1=v1",
         "e2=v2"
       ],
@@ -61,7 +61,7 @@
     "UnAcknowledge": {
       "filepath": "<path_of_script>",
       "sourceType": "local",
-      "environmentVariables": [
+      "env": [
         "e1=v1",
         "e2=v2"
       ],

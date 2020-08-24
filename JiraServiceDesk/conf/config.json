@@ -14,19 +14,19 @@
     "createIssue": {
       "filepath": "<path_of_script>",
       "sourceType": "<local | git>",
-      "environmentVariables": [],
+      "env": [],
       "stdout": "<path_of_output_file_of_script>"
     },
     "resolveIssue": {
       "filepath": "<path_of_script>",
       "sourceType": "<local | git>",
-      "environmentVariables": [],
+      "env": [],
       "stdout": "<path_of_output_file_of_script>"
     },
     "addComment": {
       "filepath": "<path_of_script>",
       "sourceType": "<local | git>",
-      "environmentVariables": [],
+      "env": [],
       "stdout": "<path_of_output_file_of_script>"
     }
   },

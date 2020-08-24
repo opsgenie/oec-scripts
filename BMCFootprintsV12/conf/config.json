@@ -13,25 +13,25 @@
     "createIncident": {
       "filepath": "<path_of_script>",
       "sourceType": "<local | git>",
-      "environmentVariables": [],
+      "env": [],
       "stdout": "<path_of_output_file_of_script>"
     },
     "createProblem": {
       "filepath": "<path_of_script>",
       "sourceType": "<local | git>",
-      "environmentVariables": [],
+      "env": [],
       "stdout": "<path_of_output_file_of_script>"
     },
     "updateDescription": {
       "filepath": "<path_of_script>",
       "sourceType": "<local | git>",
-      "environmentVariables": [],
+      "env": [],
       "stdout": "<path_of_output_file_of_script>"
     },
     "updatePriority": {
       "filepath": "<path_of_script>",
       "sourceType": "<local | git>",
-      "environmentVariables": [],
+      "env": [],
       "stdout": "<path_of_output_file_of_script>"
     }
   },

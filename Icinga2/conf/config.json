@@ -13,37 +13,37 @@
     "Create": {
       "filepath": "<path_of_script>",
       "sourceType": "<local | git>",
-      "environmentVariables": [],
+      "env": [],
       "stdout": "<path_of_output_file_of_script>"
     },
     "Acknowledge": {
       "filepath": "<path_of_script>",
       "sourceType": "<local | git>",
-      "environmentVariables": [],
+      "env": [],
       "stdout": "<path_of_output_file_of_script>"
     },
     "AddNote": {
       "filepath": "<path_of_script>",
       "sourceType": "<local | git>",
-      "environmentVariables": [],
+      "env": [],
       "stdout": "<path_of_output_file_of_script>"
     },
     "TakeOwnership": {
       "filepath": "<path_of_script>",
       "sourceType": "<local | git>",
-      "environmentVariables": [],
+      "env": [],
       "stdout": "<path_of_output_file_of_script>"
     },
     "AssignOwnership": {
       "filepath": "<path_of_script>",
       "sourceType": "<local | git>",
-      "environmentVariables": [],
+      "env": [],
       "stdout": "<path_of_output_file_of_script>"
     },
     "UnAcknowledge": {
       "filepath": "<path_of_script>",
       "sourceType": "<local | git>",
-      "environmentVariables": [],
+      "env": [],
       "stdout": "<path_of_output_file_of_script>"
     }
   },

@@ -11,7 +11,7 @@
     "Create": {
       "filepath": "<path_of_script>",
       "sourceType": "<local | git>",
-      "environmentVariables": [
+      "env": [
         "e1=v1",
         "e2=v2"
       ],
