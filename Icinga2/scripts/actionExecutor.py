@@ -1,6 +1,7 @@
 import argparse
 import json
 import logging
+import os
 import sys
 import time
 import zipfile
@@ -21,6 +22,7 @@ parser.add_argument('-password', '--password', help='Password', required=True)
 parser.add_argument('-timeout', '--timeout', help='HTTP Timeout', required=False)
 parser.add_argument('-expire_acknowledgement_after', '-expire_acknowledgement_after',
                     help='Removes acknowledgement after given value (in minutes.)', required=False)
+parser.add_argument('-insecure', '--insecure', help='Skip verifying SSL certificate', required=False)
 
 args = vars(parser.parse_args())
 
@@ -29,6 +31,8 @@ queue_message = json.loads(queue_message_string)
 
 logging.basicConfig(stream=sys.stdout, level=args['logLevel'])
 
+
+DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 
 def parse_field(key, mandatory):
     variable = queue_message[key]
@@ -50,10 +54,13 @@ def post_to_icingaApi(url_path, content_map):
     logging.debug(LOG_PREFIX + " Posting to Icinga. Url " + url + ", content: " + str(content_map))
 
     headers = {
-        "Accept": "*/*"
+        "Accept": "application/json"
     }
 
-    response = requests.post(url, json=content_map, timeout=HTTP_TIMEOUT, auth=auth_token, headers=headers)
+    verify_ssl = verify=False if args['insecure'] == 'true' else True
+    response = requests.post(url, json=content_map, timeout=HTTP_TIMEOUT,
+                             auth=auth_token, headers=headers,
+                             verify=verify_ssl)
 
     if response.status_code == 200:
         logging.info(LOG_PREFIX + " Successfully executed at Icinga.")
@@ -111,7 +118,7 @@ def attach(is_service_alert):
     logging.info("Attaching details")
 
     file_date = time.strftime("%Y_%m_%d_%H_%m_%s")
-    file_name = "details_" + file_date + ".zip"
+    file_name = os.path.join(DIR_PATH, "details_{}.zip".format(file_date))
 
     zip_file = zipfile.ZipFile(file_name, 'w')
     zip_file.writestr('index.html', html_text)
