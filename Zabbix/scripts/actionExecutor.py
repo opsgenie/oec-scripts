@@ -109,7 +109,7 @@ def main():
                         "params": {
                             "eventids": queue_message["alert"]["details"]["eventId"],
                             "message": "Acknowledged by" + alert_response.json()['data']['report'][
-                                'acknowledgedBy'] + "via Opsgenie"
+                                'acknowledgedBy'] + " via Opsgenie"
                         }
                     }
                     auth = login_to_zabbix(username, password, url)
