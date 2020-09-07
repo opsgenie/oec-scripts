@@ -75,8 +75,7 @@ func main() {
 
 	configPathPtr := flag.String("config-path", "C:\\OpsGenie\\BMCRemedyIntegration\\opsgenie-integration\\conf\\opsgenie-integration.conf", "OpsGenie Config Path")
 	configFile, err := os.Open(*configPathPtr)
-	configPathPtr2 := flag.String("config-path2", "C:\\OpsGenie\\BMCRemedyIntegration\\opsgenie-integration\\conf\\config.json", "OpsGenie Config Path2")
-	configFile2, err := os.Open(*configPathPtr2)
+	configPath2 := "C:\\opsgenie-integration\\conf\\config.conf"
 
 	if err == nil {
 		readConfigFile(configFile, configPathPtr)
@@ -84,7 +83,7 @@ func main() {
 		panic(err)
 	}
 
-	errFromConf := readConfigurationFileFromOECConfig(configFile2)
+	errFromConf := readConfigurationFileFromOECConfig(configPath2)
 
 	if errFromConf != nil {
 		panic(errFromConf)
@@ -196,7 +195,7 @@ func getHttpClient(timeout int) *http.Client {
 }
 
 func http_post(jsonBody []byte, incidentID string) {
-	if (API_KEY == "") {
+	if API_KEY == "" {
 		API_KEY = configParameters["apiKey"]
 	}
 
@@ -310,7 +309,7 @@ func readConfigFile(file io.Reader, configPathPtr *string) {
 	}
 }
 
-func readConfigurationFileFromOECConfig(filepath string) (error) {
+func readConfigurationFileFromOECConfig(filepath string) error {
 
 	jsonFile, err := os.Open(filepath)
 
