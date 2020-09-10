@@ -214,7 +214,6 @@ func http_post() {
 	var logPrefix = "[TriggerId: " + parameters["triggerId"] + ", HostName: " + parameters["hostName"] + "]"
 
 	apiUrl := configParameters["opsgenie.api.url"] + "/v1/json/zabbix"
-	logger.Error("apiUrl: " + apiUrl)
 	target := "OpsGenie"
 
 	if logger != nil {
