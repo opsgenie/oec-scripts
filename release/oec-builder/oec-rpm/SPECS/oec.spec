@@ -6,7 +6,7 @@ License: Apache-2.0
 URL: https://www.opsgenie.com/
 Group: System
 Packager: Opsgenie
-BuildRoot: ~/rpmbuild/
+BuildRoot: .
 
 %description
 Opsgenie Edge Connector (OEC) is designed to resolve challenges faced in the integration of internal and external systems.
@@ -16,9 +16,9 @@ echo "BUILDROOT = $RPM_BUILD_ROOT"
 mkdir -p $RPM_BUILD_ROOT/usr/local/bin/
 mkdir -p $RPM_BUILD_ROOT/etc/systemd/system/
 mkdir -p $RPM_BUILD_ROOT/home/opsgenie/oec/
-cp /rpmbuild/OpsgenieEdgeConnector $RPM_BUILD_ROOT/usr/local/bin/
-cp /rpmbuild/oec.service $RPM_BUILD_ROOT/etc/systemd/system/
-cp -R /rpmbuild/oec-scripts/. $RPM_BUILD_ROOT/home/opsgenie/oec/
+cp $GITHUB_WORKSPACE/.release/oec-rpm/OpsgenieEdgeConnector $RPM_BUILD_ROOT/usr/local/bin/
+cp $GITHUB_WORKSPACE/.release/oec-rpm/oec.service $RPM_BUILD_ROOT/etc/systemd/system/
+cp -R $GITHUB_WORKSPACE/.release/oec-rpm/oec-scripts/. $RPM_BUILD_ROOT/home/opsgenie/oec/
 
 %pre
 if [ ! -d "/var/log/opsgenie" ]; then
