@@ -83,10 +83,10 @@ def get_image(url):
     service = parse_from_details("service_desc")
     host = parse_from_details("host_name")
 
-    url += "?createimage&host=" + urllib.parse.urlencode(host)
+    url += "?createimage&host=" + urllib.parse.quote(host)
     if service:
         service = alert_from_opsgenie["details"]["service_desc"]
-        url += "&service=" + urllib.parse.urlencode(service)
+        url += "&service=" + urllib.parse.quote(service)
 
     logging.warning("Sending request to url:" + url)
     headers = {
