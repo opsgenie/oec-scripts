@@ -1,4 +1,4 @@
 # oec-scripts
-Opsgenie Edge Connector Custom Scripts
+Opsgenie Edge Connector (OEC) custom scripts for integrations
 
-in progress
+For more information about OEC: https://github.com/opsgenie/oec
