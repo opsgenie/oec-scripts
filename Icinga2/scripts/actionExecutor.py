@@ -79,7 +79,6 @@ def send_acknowledge_request(content_map):
         content_map["author"] = alert["username"]
         content_map["notify"] = True
         content_map["sticky"] = True
-        content_map["type"] = "Service"
 
         expire_acknowledgement_after = args["expire_acknowledgement_after"]
         if expire_acknowledgement_after:
