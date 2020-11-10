@@ -47,7 +47,6 @@ func main() {
 	} else {
 		panic(err)
 	}
-	logger = configureLogger()
 
 	errFromConf := readConfigurationFileFromOECConfig(configPath2)
 
@@ -58,6 +57,8 @@ func main() {
 	version := flag.String("v", "", "")
 	parseFlags()
 
+	logger = configureLogger()
+	
 	printConfigToLog()
 
 	if *version != "" {
