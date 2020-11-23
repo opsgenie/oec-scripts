@@ -15,11 +15,11 @@ Opsgenie Edge Connector (OEC) is designed to resolve challenges faced in the int
 echo "BUILDROOT = $RPM_BUILD_ROOT"
 mkdir -p $RPM_BUILD_ROOT/usr/local/bin/
 mkdir -p $RPM_BUILD_ROOT/home/opsgenie/oec/
-cp $GITHUB_WORKSPACE/.release/oec-rpm/OpsgenieEdgeConnector $RPM_BUILD_ROOT/usr/local/bin/
-cp -R  $GITHUB_WORKSPACE/.release/oec-rpm/oec-scripts/. $RPM_BUILD_ROOT/home/opsgenie/oec/
+cp /rpmbuild/OpsgenieEdgeConnector $RPM_BUILD_ROOT/usr/local/bin/
+cp -R /rpmbuild/oec-scripts/. $RPM_BUILD_ROOT/home/opsgenie/oec/
 
 mkdir -p $RPM_BUILD_ROOT/etc/init.d/
-cp $GITHUB_WORKSPACE/.release/oec-rpm/rhel6-service/oec $RPM_BUILD_ROOT/etc/init.d/
+cp /rpmbuild/rhel6-service/oec $RPM_BUILD_ROOT/etc/init.d/
 
 %pre
 if [ ! -d "/var/log/opsgenie" ]; then
