@@ -14,6 +14,7 @@ import (
 	"strconv"
 	"github.com/alexcesaro/log/golog"
 	"github.com/alexcesaro/log"
+	"github.com/clagraff/argparse"
 	"fmt"
 	"io/ioutil"
 	"crypto/tls"
@@ -39,7 +40,38 @@ var configPath2 = "/home/opsgenie/oec/conf/config.json"
 var levels = map[string]log.Level{"info": log.Info, "debug": log.Debug, "warning": log.Warning, "error": log.Error}
 var logger log.Logger
 
+func cb(p *argparse.Parser, ns *argparse.Namespace, leftovers []string, err error) {
+	if err != nil {
+		switch err.(type) {
+		case argparse.ShowHelpErr, argparse.ShowVersionErr:
+			os.Exit(1)
+		default:
+			fmt.Println(err, "\n")
+			p.ShowHelp()
+		}
+
+		os.Exit(2)
+	}
+
+	var arg string
+	arg = ns.Get("cp").(string)
+	if arg != "" {
+		configPath = arg
+	}
+	arg = ns.Get("cp2").(string)
+	if arg != "" {
+		configPath2 = arg
+	}
+}
+
 func main() {
+	p := argparse.NewParser("send alert to global opsgenie", cb).Version("0.0.1")
+	p.AddHelp().AddVersion()
+	cp := argparse.NewOption("c config", "cp", "opsgenie-integration.conf path").Default(configPath).Nargs("1").Action(argparse.Store)
+	cp2 := argparse.NewOption("j config-json", "cp2", "oec config.json path").Default(configPath2).Nargs("1").Action(argparse.Store)
+	p.AddOptions(cp, cp2)
+	p.Parse(os.Args[1:]...)
+
 	configFile, err := os.Open(configPath)
 	if err == nil {
 		readConfigFile(configFile)
@@ -49,13 +81,11 @@ func main() {
 
 	logger = configureLogger()
 
-
 	errFromConf := readConfigurationFileFromOECConfig(configPath2)
 
 	if errFromConf != nil {
 		panic(err)
 	}
-
 
 	version := flag.String("v", "", "")
 	parseFlags()
