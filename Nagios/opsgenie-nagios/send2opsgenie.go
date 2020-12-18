@@ -40,6 +40,9 @@ var levels = map[string]log.Level{"info": log.Info, "debug": log.Debug, "warning
 var logger log.Logger
 
 func main() {
+	version := flag.String("v", "", "")
+	parseFlags()
+
 	configFile, err := os.Open(configPath)
 	if err == nil {
 		readConfigFile(configFile)
@@ -49,16 +52,11 @@ func main() {
 
 	logger = configureLogger()
 
-
 	errFromConf := readConfigurationFileFromOECConfig(configPath2)
 
 	if errFromConf != nil {
 		panic(err)
 	}
-
-
-	version := flag.String("v", "", "")
-	parseFlags()
 
 	printConfigToLog()
 
@@ -139,9 +137,11 @@ func readConfigurationFileFromOECConfig(filepath string) (error) {
 
 	if configParameters["apiKey"] == "" {
 		configParameters["apiKey"] = data.ApiKey
+		parameters["apiKey"] = data.ApiKey
 	}
 	if configParameters["opsgenie.api.url"] != data.BaseUrl {
 		configParameters["opsgenie.api.url"] = data.BaseUrl
+		parameters["opsgenie.api.url"] = data.BaseUrl
 	}
 
 	defer jsonFile.Close()
@@ -361,6 +361,8 @@ func parseFlags() map[string]string {
 	serviceNotesUrl := flag.String("snu", "", "SERVICENOTESURL")
 	servicePerfData := flag.String("spd", "", "SERVICEPERFDATA")
 	logPath := flag.String("logPath", "", "LOGPATH")
+	cp := flag.String("config", "", "CONFIGPATH")
+	cp2 := flag.String("configjson", "", "CONFIGPATH2")
 
 	responders := flag.String("responders", "", "Responders")
 	tags := flag.String("tags", "", "Tags")
@@ -394,6 +396,14 @@ func parseFlags() map[string]string {
 		parameters["logPath"] = *logPath
 	} else {
 		parameters["logPath"] = configParameters["logPath"]
+	}
+
+	if *cp != "" {
+		configPath = *cp
+	}
+
+	if *cp2 != "" {
+		configPath2 = *cp2
 	}
 
 	parameters["entity_type"] = *entityType
