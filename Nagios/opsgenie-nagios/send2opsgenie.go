@@ -14,6 +14,7 @@ import (
 	"strconv"
 	"github.com/alexcesaro/log/golog"
 	"github.com/alexcesaro/log"
+	"github.com/clagraff/argparse"
 	"fmt"
 	"io/ioutil"
 	"crypto/tls"
@@ -38,6 +39,30 @@ var configPath = "/home/opsgenie/oec/conf/opsgenie-integration.conf"
 var configPath2 = "/home/opsgenie/oec/conf/config.json"
 var levels = map[string]log.Level{"info": log.Info, "debug": log.Debug, "warning": log.Warning, "error": log.Error}
 var logger log.Logger
+
+func cb(p *argparse.Parser, ns *argparse.Namespace, leftovers []string, err error) {
+	if err != nil {
+		switch err.(type) {
+		case argparse.ShowHelpErr, argparse.ShowVersionErr:
+			os.Exit(1)
+		default:
+			fmt.Println(err, "\n")
+			p.ShowHelp()
+		}
+
+		os.Exit(2)
+	}
+
+	var arg string
+	arg = ns.Get("cp").(string)
+	if arg != "" {
+		configPath = arg
+	}
+	arg = ns.Get("cp2").(string)
+	if arg != "" {
+		configPath2 = arg
+	}
+}
 
 func main() {
 	version := flag.String("v", "", "")
