@@ -12,6 +12,10 @@ jobs:
   setup:
     name: Setup For Release
     runs-on: ubuntu-latest
+    outputs:
+      upload_url: ${{  steps.create_release.outputs.upload_url }}
+      integration_name: ${{  steps.gather_params.outputs.INTEGRATION_NAME }}
+      integration_version: ${{  steps.gather_params.outputs.INTEGRATION_VERSION }}
     steps:
     - name: Create Release
       id: create_release
@@ -22,13 +26,13 @@ jobs:
         tag_name: ${{ github.event.inputs.integration }}-OEC-${{ github.event.inputs.oec-version }}
         release_name: Release ${{ github.event.inputs.integration }}-oec-${{ github.event.inputs.oec-version }}
         draft: true
-    - name: Create URL Artifact
-      run: echo "${{ steps.create_release.outputs.upload_url }}" > upload-url.txt
-    - name: Upload URL file
-      uses: actions/upload-artifact@v2
-      with:
-        name: upload-url
-        path: upload-url.txt
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v2
+    - name: Retrieve Integration Version
+      id: gather_params
+      run: |
+        echo ::set-output name=INTEGRATION_VERSION::$(jq -r --arg v "${{ github.event.inputs.integration }}" '.[$v]' release/oec-builder/oecScriptsVersion.json)
+        echo ::set-output name=INTEGRATION_NAME::$(echo "${{ github.event.inputs.integration }}" | awk '{print tolower($0)}')
   linux:
     name: Linux
     runs-on: ubuntu-latest
@@ -55,17 +59,14 @@ jobs:
       run: unzip -qq oec-linux-amd64-${{ github.event.inputs.oec-version }}.zip -d .release/oec-linux
     - name: Copy Integration Files
       run: cp -R ${{ github.event.inputs.integration }}/. .release/oec-linux
-    - name: Retrieve Integration Version
-      run: |
-        echo ::set-env name=INTEGRATION_VERSION::$(jq -r --arg v "${{ github.event.inputs.integration }}" '.[$v]' release/oec-builder/oecScriptsVersion.json)
-    - name: Retrieve Integration Name
-      run: |
-        echo ::set-env name=INTEGRATION_NAME::$(echo "${{ github.event.inputs.integration }}" | awk '{print tolower($0)}')
     - name: Check incomming part exists
       id: check_files
       uses: andstor/file-existence-action@v1
       with:
         files: ".release/oec-linux/opsgenie-${{ env.INTEGRATION_NAME }}"
+      env:
+        INTEGRATION_NAME: ${{ needs.setup.outputs.integration_name }}
+        INTEGRATION_VERSION: ${{ needs.setup.outputs.integration_version }}
     - name: "Release Incomming Part"
       working-directory: .release
       if: steps.check_files.outputs.files_exists == 'true'
@@ -75,26 +76,26 @@ jobs:
         go get -u github.com/alexcesaro/log && \
         cd ${INTEGRATION_PATH} && \
         GOOS=linux GOARCH=amd64 go build -o send2opsgenie send2opsgenie.go
+      env:
+        INTEGRATION_NAME: ${{ needs.setup.outputs.integration_name }}
     - name: Compressing Linux Package
       run: zip -qq -j -r .release/oec-linux/opsgenie-${INTEGRATION_NAME}-${INTEGRATION_VERSION}-linux-amd64.zip .release/oec-linux/
+      env:
+        INTEGRATION_NAME: ${{ needs.setup.outputs.integration_name }}
+        INTEGRATION_VERSION: ${{ needs.setup.outputs.integration_version }}
     - name: Upload Artifacts 
       uses: actions/upload-artifact@v2
       with:
         name: Linux Artifacts
         path: .release/oec-linux/*.zip
-    - name: Download Upload URL
-      uses: actions/download-artifact@v2
-      with:
-        name: upload-url
-    - name: Retrieve Upload URL
-      run: |
-        echo ::set-env name=UPLOAD_URL::$(cat upload-url.txt)
     - name: Upload
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        INTEGRATION_NAME: ${{ needs.setup.outputs.integration_name }}
+        INTEGRATION_VERSION: ${{ needs.setup.outputs.integration_version }}
       with:
-        upload_url: ${{ env.UPLOAD_URL }}
+        upload_url: ${{ needs.setup.outputs.upload_url }}
         asset_path: .release/oec-linux/opsgenie-${{ env.INTEGRATION_NAME }}-${{ env.INTEGRATION_VERSION }}-linux-amd64.zip
         asset_name: opsgenie-${{ env.INTEGRATION_NAME }}-${{ env.INTEGRATION_VERSION }}-linux-amd64.zip
         asset_content_type: application/zip
@@ -126,17 +127,14 @@ jobs:
       run: cp -R release/oec-builder/oec-rpm/. .release/oec-rpm
     - name: Copy Integration Files
       run: cp -R ${{ github.event.inputs.integration }}/. .release/oec-rpm/oec-scripts
-    - name: Retrieve Integration Version
-      run: |
-        echo ::set-env name=INTEGRATION_VERSION::$(jq -r --arg v "${{ github.event.inputs.integration }}" '.[$v]' release/oec-builder/oecScriptsVersion.json)
-    - name: Retrieve Integration Name
-      run: |
-        echo ::set-env name=INTEGRATION_NAME::$(echo "${{ github.event.inputs.integration }}" | awk '{print tolower($0)}')
     - name: Check incomming part exists
       id: check_files
       uses: andstor/file-existence-action@v1
       with:
         files: ".release/oec-rpm/oec-scripts/opsgenie-${{ env.INTEGRATION_NAME }}"
+      env:
+        INTEGRATION_NAME: ${{ needs.setup.outputs.integration_name }}
+        INTEGRATION_VERSION: ${{ needs.setup.outputs.integration_version }}
     - name: "Release Incomming Part"
       working-directory: .release
       if: steps.check_files.outputs.files_exists == 'true'
@@ -146,6 +144,9 @@ jobs:
         go get -u github.com/alexcesaro/log && \
         cd ${INTEGRATION_PATH} && \
         GOOS=linux GOARCH=amd64 go build -o send2opsgenie send2opsgenie.go
+      env:
+        INTEGRATION_NAME: ${{ needs.setup.outputs.integration_name }}
+        INTEGRATION_VERSION: ${{ needs.setup.outputs.integration_version }}
     - name: Create RPM Package 
       working-directory: .release/oec-rpm
       run: |
@@ -161,26 +162,30 @@ jobs:
 
         rpmbuild --target=x86_64 -ba SPECS/oec.spec
         rpmbuild --target=x86_64 -ba SPECS/oec-rhel6.spec
+      env:
+        INTEGRATION_NAME: ${{ needs.setup.outputs.integration_name }}
+        INTEGRATION_VERSION: ${{ needs.setup.outputs.integration_version }}
     - name: Compressing RPM Package
       run: zip -qq -j -r .release/oec-rpm/opsgenie-${INTEGRATION_NAME}-${INTEGRATION_VERSION}-rpm-x86_64.zip ~/rpmbuild/RPMS/x86_64/*.rpm
+      env:
+        INTEGRATION_NAME: ${{ needs.setup.outputs.integration_name }}
+        INTEGRATION_VERSION: ${{ needs.setup.outputs.integration_version }}
     - name: Upload Artifacts 
       uses: actions/upload-artifact@v2
       with:
         name: RPM Artifacts
         path: .release/oec-rpm/opsgenie-${{ env.INTEGRATION_NAME }}-${{ env.INTEGRATION_VERSION }}-rpm-x86_64.zip
-    - name: Download Upload URL
-      uses: actions/download-artifact@v2
-      with:
-        name: upload-url
-    - name: Retrieve Upload URL
-      run: |
-        echo ::set-env name=UPLOAD_URL::$(cat upload-url.txt)
+      env:
+        INTEGRATION_NAME: ${{ needs.setup.outputs.integration_name }}
+        INTEGRATION_VERSION: ${{ needs.setup.outputs.integration_version }}
     - name: Upload 
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        INTEGRATION_NAME: ${{ needs.setup.outputs.integration_name }}
+        INTEGRATION_VERSION: ${{ needs.setup.outputs.integration_version }}
       with:
-        upload_url: ${{ env.UPLOAD_URL }}
+        upload_url: ${{ needs.setup.outputs.upload_url }}
         asset_path: .release/oec-rpm/opsgenie-${{ env.INTEGRATION_NAME }}-${{ env.INTEGRATION_VERSION }}-rpm-x86_64.zip
         asset_name: opsgenie-${{ env.INTEGRATION_NAME }}-${{ env.INTEGRATION_VERSION }}-rpm-x86_64.zip
         asset_content_type: application/zip
@@ -214,17 +219,14 @@ jobs:
       run: mkdir -p .release/oec-deb/home/opsgenie/oec
     - name: Copy Integration Files
       run: cp -R ${{ github.event.inputs.integration }}/. .release/oec-deb/home/opsgenie/oec
-    - name: Retrieve Integration Version
-      run: |
-        echo ::set-env name=INTEGRATION_VERSION::$(jq -r --arg v "${{ github.event.inputs.integration }}" '.[$v]' release/oec-builder/oecScriptsVersion.json)
-    - name: Retrieve Integration Name
-      run: |
-        echo ::set-env name=INTEGRATION_NAME::$(echo "${{ github.event.inputs.integration }}" | awk '{print tolower($0)}')
     - name: Check incomming part exists
       id: check_files
       uses: andstor/file-existence-action@v1
       with:
         files: ".release/oec-deb/home/opsgenie/oec/opsgenie-${{ env.INTEGRATION_NAME }}"
+      env:
+        INTEGRATION_NAME: ${{ needs.setup.outputs.integration_name }}
+        INTEGRATION_VERSION: ${{ needs.setup.outputs.integration_version }}
     - name: "Release Incomming Part"
       working-directory: .release
       if: steps.check_files.outputs.files_exists == 'true'
@@ -234,6 +236,9 @@ jobs:
         go get -u github.com/alexcesaro/log && \
         cd ${INTEGRATION_PATH} && \
         GOOS=linux GOARCH=amd64 go build -o send2opsgenie send2opsgenie.go
+      env:
+        INTEGRATION_NAME: ${{ needs.setup.outputs.integration_name }}
+        INTEGRATION_VERSION: ${{ needs.setup.outputs.integration_version }}
     - name: Create RPM Package 
       working-directory: .release/
       run: |
@@ -246,26 +251,30 @@ jobs:
 
         mkdir deb-package
         dpkg-deb -b  oec-deb deb-package
+      env:
+        INTEGRATION_NAME: ${{ needs.setup.outputs.integration_name }}
+        INTEGRATION_VERSION: ${{ needs.setup.outputs.integration_version }}
     - name: Compressing RPM Package
       run: zip -qq -j -r .release/oec-deb/opsgenie-${INTEGRATION_NAME}-${INTEGRATION_VERSION}-deb-x86_64.zip .release/deb-package/*.deb
+      env:
+        INTEGRATION_NAME: ${{ needs.setup.outputs.integration_name }}
+        INTEGRATION_VERSION: ${{ needs.setup.outputs.integration_version }}
     - name: Upload Artifacts 
       uses: actions/upload-artifact@v2
       with:
         name: Debian Artifacts
         path: .release/oec-deb/opsgenie-${{ env.INTEGRATION_NAME }}-${{ env.INTEGRATION_VERSION }}-deb-x86_64.zip
-    - name: Download Upload URL
-      uses: actions/download-artifact@v2
-      with:
-        name: upload-url
-    - name: Retrieve Upload URL
-      run: |
-        echo ::set-env name=UPLOAD_URL::$(cat upload-url.txt)
+      env:
+        INTEGRATION_NAME: ${{ needs.setup.outputs.integration_name }}
+        INTEGRATION_VERSION: ${{ needs.setup.outputs.integration_version }}
     - name: Upload 
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        INTEGRATION_NAME: ${{ needs.setup.outputs.integration_name }}
+        INTEGRATION_VERSION: ${{ needs.setup.outputs.integration_version }}
       with:
-        upload_url: ${{ env.UPLOAD_URL }}
+        upload_url: ${{ needs.setup.outputs.upload_url }}
         asset_path: .release/oec-deb/opsgenie-${{ env.INTEGRATION_NAME }}-${{ env.INTEGRATION_VERSION }}-deb-x86_64.zip
         asset_name: opsgenie-${{ env.INTEGRATION_NAME }}-${{ env.INTEGRATION_VERSION }}-deb-x86_64.zip
         asset_content_type: application/zip
@@ -295,17 +304,14 @@ jobs:
       run: unzip -qq oec-win-386-${{ github.event.inputs.oec-version }}.zip -d .release/oec-win32
     - name: Copy Integration Files
       run: cp -R ${{ github.event.inputs.integration }}/. .release/oec-win32
-    - name: Retrieve Integration Version
-      run: |
-        echo ::set-env name=INTEGRATION_VERSION::$(jq -r --arg v "${{ github.event.inputs.integration }}" '.[$v]' release/oec-builder/oecScriptsVersion.json)
-    - name: Retrieve Integration Name
-      run: |
-        echo ::set-env name=INTEGRATION_NAME::$(echo "${{ github.event.inputs.integration }}" | awk '{print tolower($0)}')
     - name: Check incomming part exists
       id: check_files
       uses: andstor/file-existence-action@v1
       with:
         files: ".release/oec-win32/opsgenie-${{ env.INTEGRATION_NAME }}"
+      env:
+        INTEGRATION_NAME: ${{ needs.setup.outputs.integration_name }}
+        INTEGRATION_VERSION: ${{ needs.setup.outputs.integration_version }}
     - name: "Release Incomming Part"
       working-directory: .release
       if: steps.check_files.outputs.files_exists == 'true'
@@ -315,26 +321,27 @@ jobs:
         go get -u github.com/alexcesaro/log && \
         cd ${INTEGRATION_PATH} && \
         GOOS=windows GOARCH=386 go build -o send2opsgenie32.exe send2opsgenie.go
+      env:
+        INTEGRATION_NAME: ${{ needs.setup.outputs.integration_name }}
+        INTEGRATION_VERSION: ${{ needs.setup.outputs.integration_version }}
     - name: Compressing Win32 Package
       run: zip -qq -j -r .release/oec-win32/opsgenie-${INTEGRATION_NAME}-${INTEGRATION_VERSION}-win-386.zip .release/oec-win32/
+      env:
+        INTEGRATION_NAME: ${{ needs.setup.outputs.integration_name }}
+        INTEGRATION_VERSION: ${{ needs.setup.outputs.integration_version }}
     - name: Upload Artifacts 
       uses: actions/upload-artifact@v2
       with:
         name: Win32 Artifacts
         path: .release/oec-win32/*.zip
-    - name: Download Upload URL
-      uses: actions/download-artifact@v2
-      with:
-        name: upload-url
-    - name: Retrieve Upload URL
-      run: |
-        echo ::set-env name=UPLOAD_URL::$(cat upload-url.txt)
     - name: Upload
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        INTEGRATION_NAME: ${{ needs.setup.outputs.integration_name }}
+        INTEGRATION_VERSION: ${{ needs.setup.outputs.integration_version }}
       with:
-        upload_url: ${{ env.UPLOAD_URL }}
+        upload_url: ${{ needs.setup.outputs.upload_url }}
         asset_path: .release/oec-win32/opsgenie-${{ env.INTEGRATION_NAME }}-${{ env.INTEGRATION_VERSION }}-win-386.zip
         asset_name: opsgenie-${{ env.INTEGRATION_NAME }}-${{ env.INTEGRATION_VERSION }}-win-386.zip
         asset_content_type: application/zip
@@ -364,17 +371,14 @@ jobs:
       run: unzip -qq oec-win-amd64-${{ github.event.inputs.oec-version }}.zip -d .release/oec-win64
     - name: Copy Integration Files
       run: cp -R ${{ github.event.inputs.integration }}/. .release/oec-win64
-    - name: Retrieve Integration Version
-      run: |
-        echo ::set-env name=INTEGRATION_VERSION::$(jq -r --arg v "${{ github.event.inputs.integration }}" '.[$v]' release/oec-builder/oecScriptsVersion.json)
-    - name: Retrieve Integration Name
-      run: |
-        echo ::set-env name=INTEGRATION_NAME::$(echo "${{ github.event.inputs.integration }}" | awk '{print tolower($0)}')
     - name: Check incomming part exists
       id: check_files
       uses: andstor/file-existence-action@v1
       with:
         files: ".release/oec-win64/opsgenie-${{ env.INTEGRATION_NAME }}"
+      env:
+        INTEGRATION_NAME: ${{ needs.setup.outputs.integration_name }}
+        INTEGRATION_VERSION: ${{ needs.setup.outputs.integration_version }}
     - name: "Release Incomming Part"
       working-directory: .release
       if: steps.check_files.outputs.files_exists == 'true'
@@ -384,26 +388,27 @@ jobs:
         go get -u github.com/alexcesaro/log && \
         cd ${INTEGRATION_PATH} && \
         GOOS=windows GOARCH=amd64 go build -o send2opsgenie32.exe send2opsgenie.go
+      env:
+        INTEGRATION_NAME: ${{ needs.setup.outputs.integration_name }}
+        INTEGRATION_VERSION: ${{ needs.setup.outputs.integration_version }}
     - name: Compressing Win 64 Package
       run: zip -qq -j -r .release/oec-win64/opsgenie-${INTEGRATION_NAME}-${INTEGRATION_VERSION}-win-amd64.zip .release/oec-win64/
+      env:
+        INTEGRATION_NAME: ${{ needs.setup.outputs.integration_name }}
+        INTEGRATION_VERSION: ${{ needs.setup.outputs.integration_version }}
     - name: Upload Artifacts 
       uses: actions/upload-artifact@v2
       with:
         name: Win64 Artifacts
         path: .release/oec-win64/*.zip
-    - name: Download Upload URL
-      uses: actions/download-artifact@v2
-      with:
-        name: upload-url
-    - name: Retrieve Upload URL
-      run: |
-        echo ::set-env name=UPLOAD_URL::$(cat upload-url.txt)
     - name: Upload
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        INTEGRATION_NAME: ${{ needs.setup.outputs.integration_name }}
+        INTEGRATION_VERSION: ${{ needs.setup.outputs.integration_version }}
       with:
-        upload_url: ${{ env.UPLOAD_URL }}
+        upload_url: ${{ needs.setup.outputs.upload_url }}
         asset_path: .release/oec-win64/opsgenie-${{ env.INTEGRATION_NAME }}-${{ env.INTEGRATION_VERSION }}-win-amd64.zip
         asset_name: opsgenie-${{ env.INTEGRATION_NAME }}-${{ env.INTEGRATION_VERSION }}-win-amd64.zip
         asset_content_type: application/zip
