@@ -43,9 +43,7 @@ def parse_field(key, mandatory):
                          "' is missing. Check your configuration file.")
 
 
-def send_create_request():
-    service = parse_from_details("service_desc")
-    is_service_alert = service.strip() != ""
+def send_create_request(is_service_alert):
     attach(is_service_alert)
 
 
@@ -79,7 +77,6 @@ def send_acknowledge_request(content_map):
         content_map["author"] = alert["username"]
         content_map["notify"] = True
         content_map["sticky"] = True
-        content_map["type"] = "Service"
 
         expire_acknowledgement_after = args["expire_acknowledgement_after"]
         if expire_acknowledgement_after:
@@ -90,6 +87,12 @@ def send_acknowledge_request(content_map):
 
         post_to_icingaApi(url_path, content_map)
 
+def send_unacknowledge_request(content_map):
+    url_path = "/v1/actions/remove-acknowledgement"
+    content_map["comment"] = "UnAcknowledged by " + alert["username"] + " via OpsGenie"
+    content_map["author"] = alert["username"]
+    content_map["notify"] = True
+    post_to_icingaApi(url_path, content_map)
 
 def send_take_ownership_request(content_map):
     url_path = "/v1/actions/add-comment"
@@ -364,9 +367,11 @@ def main():
             content_map["filter"] = "host.name==\"" + host + "\""
 
         if action == 'Create':
-            send_create_request()
+            send_create_request(is_service_alert)
         elif action == "Acknowledge":
             send_acknowledge_request(content_map)
+        elif action == "UnAcknowledge":
+            send_unacknowledge_request(content_map)
         elif action == "TakeOwnership":
             send_take_ownership_request(content_map)
         elif action == "AssignOwnership":
