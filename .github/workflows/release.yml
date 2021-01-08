@@ -10,22 +10,13 @@ on:
         required: true
 jobs:
   setup:
-    name: Setup For Release
+    name: Setup For ${{ github.event.inputs.integration }} Release
     runs-on: ubuntu-latest
     outputs:
       upload_url: ${{  steps.create_release.outputs.upload_url }}
       integration_name: ${{  steps.gather_params.outputs.INTEGRATION_NAME }}
       integration_version: ${{  steps.gather_params.outputs.INTEGRATION_VERSION }}
     steps:
-    - name: Create Release
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: ${{ github.event.inputs.integration }}-OEC-${{ github.event.inputs.oec-version }}
-        release_name: Release ${{ github.event.inputs.integration }}-oec-${{ github.event.inputs.oec-version }}
-        draft: true
     - name: Check out code into the Go module directory
       uses: actions/checkout@v2
     - name: Retrieve Integration Version
@@ -33,6 +24,17 @@ jobs:
       run: |
         echo ::set-output name=INTEGRATION_VERSION::$(jq -r --arg v "${{ github.event.inputs.integration }}" '.[$v]' release/oec-builder/oecScriptsVersion.json)
         echo ::set-output name=INTEGRATION_NAME::$(echo "${{ github.event.inputs.integration }}" | awk '{print tolower($0)}')
+    - name: Create ${{ github.event.inputs.integration }} Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        INTEGRATION_VERSION: ${{ steps.gather_params.outputs.INTEGRATION_VERSION }}
+        INTEGRATION_NAME: ${{ github.event.inputs.integration }}
+      with:
+        tag_name: ${{ env.INTEGRATION_NAME }}-${{ env.INTEGRATION_VERSION }}_oec-${{ github.event.inputs.oec-version }}
+        release_name: ${{ env.INTEGRATION_NAME }}-${{ env.INTEGRATION_VERSION }}_oec-${{ github.event.inputs.oec-version }}
+        draft: true
   linux:
     name: Linux
     runs-on: ubuntu-latest
@@ -59,6 +61,8 @@ jobs:
       run: unzip -qq oec-linux-amd64-${{ github.event.inputs.oec-version }}.zip -d .release/oec-linux
     - name: Copy Integration Files
       run: cp -R ${{ github.event.inputs.integration }}/. .release/oec-linux
+    - name: Remove http script (todo remove when http version is released)
+      run: rm -f .release/oec-linux/scripts/http.py
     - name: Check incomming part exists
       id: check_files
       uses: andstor/file-existence-action@v1
@@ -278,8 +282,6 @@ jobs:
       env:
         INTEGRATION_NAME: ${{ needs.setup.outputs.integration_name }}
         INTEGRATION_VERSION: ${{ needs.setup.outputs.integration_version }}
-    - name: Ls Deb Package
-      run: ls .release/deb-package/
     - name: Move Deb Package
       env:
         INTEGRATION_NAME: ${{ needs.setup.outputs.integration_name }}
@@ -330,6 +332,8 @@ jobs:
       run: unzip -qq oec-win-386-${{ github.event.inputs.oec-version }}.zip -d .release/oec-win32
     - name: Copy Integration Files
       run: cp -R ${{ github.event.inputs.integration }}/. .release/oec-win32
+    - name: Remove http script (todo remove when http version is released)
+      run: rm -f .release/oec-win32/scripts/http.py
     - name: Check incomming part exists
       id: check_files
       uses: andstor/file-existence-action@v1
@@ -397,6 +401,8 @@ jobs:
       run: unzip -qq oec-win-amd64-${{ github.event.inputs.oec-version }}.zip -d .release/oec-win64
     - name: Copy Integration Files
       run: cp -R ${{ github.event.inputs.integration }}/. .release/oec-win64
+    - name: Remove http script (todo remove when http version is released)
+      run: rm -f .release/oec-win64/scripts/http.py
     - name: Check incomming part exists
       id: check_files
       uses: andstor/file-existence-action@v1
