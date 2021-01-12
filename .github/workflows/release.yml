@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
     inputs:
       integration:
-        description: 'Integration'     
+        description: 'Integration'
         required: true
       oec-version:
         description: 'Version of OEC'
@@ -17,430 +17,384 @@ jobs:
       integration_name: ${{  steps.gather_params.outputs.INTEGRATION_NAME }}
       integration_version: ${{  steps.gather_params.outputs.INTEGRATION_VERSION }}
     steps:
-    - name: Check out code into the Go module directory
-      uses: actions/checkout@v2
-    - name: Retrieve Integration Version
-      id: gather_params
-      run: |
-        echo ::set-output name=INTEGRATION_VERSION::$(jq -r --arg v "${{ github.event.inputs.integration }}" '.[$v]' release/oec-builder/oecScriptsVersion.json)
-        echo ::set-output name=INTEGRATION_NAME::$(echo "${{ github.event.inputs.integration }}" | awk '{print tolower($0)}')
-    - name: Create ${{ github.event.inputs.integration }} Release
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        INTEGRATION_VERSION: ${{ steps.gather_params.outputs.INTEGRATION_VERSION }}
-        INTEGRATION_NAME: ${{ github.event.inputs.integration }}
-      with:
-        tag_name: ${{ env.INTEGRATION_NAME }}-${{ env.INTEGRATION_VERSION }}_oec-${{ github.event.inputs.oec-version }}
-        release_name: ${{ env.INTEGRATION_NAME }}-${{ env.INTEGRATION_VERSION }}_oec-${{ github.event.inputs.oec-version }}
-        draft: true
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v2
+      - name: Retrieve Integration Version
+        id: gather_params
+        run: |
+          echo ::set-output name=INTEGRATION_VERSION::$(jq -r --arg v "${{ github.event.inputs.integration }}" '.[$v]' release/oec-builder/oecScriptsVersion.json)
+          echo ::set-output name=INTEGRATION_NAME::$(echo "${{ github.event.inputs.integration }}" | awk '{print tolower($0)}')
+      - name: Create ${{ github.event.inputs.integration }} Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          INTEGRATION_VERSION: ${{ steps.gather_params.outputs.INTEGRATION_VERSION }}
+          INTEGRATION_NAME: ${{ github.event.inputs.integration }}
+        with:
+          tag_name: ${{ env.INTEGRATION_NAME }}-${{ env.INTEGRATION_VERSION }}_oec-${{ github.event.inputs.oec-version }}
+          release_name: ${{ env.INTEGRATION_NAME }}-${{ env.INTEGRATION_VERSION }}_oec-${{ github.event.inputs.oec-version }}
+          draft: true
   linux:
     name: Linux
     runs-on: ubuntu-latest
-    needs: [setup]
+    needs: [ setup ]
+    env:
+      INTEGRATION_NAME: ${{ needs.setup.outputs.integration_name }}
+      INTEGRATION_VERSION: ${{ needs.setup.outputs.integration_version }}
+      INTEGRATION_FOLDER: opsgenie-${{ needs.setup.outputs.integration_name }}-${{ needs.setup.outputs.integration_version }}-linux-amd64
     if: github.ref == 'refs/heads/master'
     steps:
-    - name: Set up Go 1.x
-      uses: actions/setup-go@v2
-      with:
-        go-version: ^1.13
-      id: go
-    - name: Check out code into the Go module directory
-      uses: actions/checkout@v2
-    - name: Create Output Directory
-      run: mkdir -p .release/oec-linux
-    - name: Download Asset
-      uses: i3h/download-release-asset@v1.2.0
-      with:
-        owner: opsgenie
-        repo: oec
-        tag: ${{ github.event.inputs.oec-version }}
-        file: oec-linux-amd64-${{ github.event.inputs.oec-version }}.zip
-    - name: Extracting Linux Package
-      run: unzip -qq oec-linux-amd64-${{ github.event.inputs.oec-version }}.zip -d .release/oec-linux
-    - name: Copy Integration Files
-      run: cp -R ${{ github.event.inputs.integration }}/. .release/oec-linux
-    - name: Remove http script (todo remove when http version is released)
-      run: rm -f .release/oec-linux/scripts/http.py
-    - name: Check incomming part exists
-      id: check_files
-      uses: andstor/file-existence-action@v1
-      with:
-        files: ".release/oec-linux/opsgenie-${{ env.INTEGRATION_NAME }}"
-      env:
-        INTEGRATION_NAME: ${{ needs.setup.outputs.integration_name }}
-        INTEGRATION_VERSION: ${{ needs.setup.outputs.integration_version }}
-    - name: "Release Incomming Part"
-      working-directory: .release
-      if: steps.check_files.outputs.files_exists == 'true'
-      run: |
-        INTEGRATION_PATH=oec-linux/opsgenie-${INTEGRATION_NAME}
-        echo ${INTEGRATION_PATH}
-        go get -u github.com/alexcesaro/log && \
-        cd ${INTEGRATION_PATH} && \
-        GOOS=linux GOARCH=amd64 go build -o send2opsgenie send2opsgenie.go
-      env:
-        INTEGRATION_NAME: ${{ needs.setup.outputs.integration_name }}
-    - name: Compressing Linux Package
-      run: zip -qq -j -r .release/oec-linux/opsgenie-${INTEGRATION_NAME}-${INTEGRATION_VERSION}-linux-amd64.zip .release/oec-linux/
-      env:
-        INTEGRATION_NAME: ${{ needs.setup.outputs.integration_name }}
-        INTEGRATION_VERSION: ${{ needs.setup.outputs.integration_version }}
-    - name: Upload Artifact
-      uses: actions/upload-artifact@v2
-      with:
-        name: Linux Artifact
-        path: .release/oec-linux/*.zip
-    - name: Upload
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        INTEGRATION_NAME: ${{ needs.setup.outputs.integration_name }}
-        INTEGRATION_VERSION: ${{ needs.setup.outputs.integration_version }}
-      with:
-        upload_url: ${{ needs.setup.outputs.upload_url }}
-        asset_path: .release/oec-linux/opsgenie-${{ env.INTEGRATION_NAME }}-${{ env.INTEGRATION_VERSION }}-linux-amd64.zip
-        asset_name: opsgenie-${{ env.INTEGRATION_NAME }}-${{ env.INTEGRATION_VERSION }}-linux-amd64.zip
-        asset_content_type: application/zip
+      - name: Set up Go 1.x
+        uses: actions/setup-go@v2
+        with:
+          go-version: ^1.13
+        id: go
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v2
+      - name: Create Output Directory
+        run: mkdir -p .release/oec-linux/${{ env.INTEGRATION_FOLDER }}
+      - name: Download Asset
+        uses: i3h/download-release-asset@v1.2.0
+        with:
+          owner: opsgenie
+          repo: oec
+          tag: ${{ github.event.inputs.oec-version }}
+          file: oec-linux-amd64-${{ github.event.inputs.oec-version }}.zip
+      - name: Extracting Linux Package
+        run: unzip -qq oec-linux-amd64-${{ github.event.inputs.oec-version }}.zip -d .release/oec-linux/${{ env.INTEGRATION_FOLDER }}
+      - name: Copy Integration Files
+        run: cp -R ${{ github.event.inputs.integration }}/. .release/oec-linux/${{ env.INTEGRATION_FOLDER }}
+      - name: Remove http script (todo remove when http version is released)
+        run: rm -f .release/oec-linux/${{ env.INTEGRATION_FOLDER }}/scripts/http.py
+      - name: Check incomming part exists
+        id: check_files
+        uses: andstor/file-existence-action@v1
+        with:
+          files: ".release/oec-linux/${{ env.INTEGRATION_FOLDER }}/opsgenie-${{ env.INTEGRATION_NAME }}"
+      - name: "Release Incomming Part"
+        working-directory: .release
+        if: steps.check_files.outputs.files_exists == 'true'
+        run: |
+          INTEGRATION_PATH=oec-linux/${{ env.INTEGRATION_FOLDER }}/opsgenie-${{ env.INTEGRATION_NAME }}
+          echo ${INTEGRATION_PATH}
+          go get -u github.com/alexcesaro/log && \
+          cd ${INTEGRATION_PATH} && \
+          GOOS=linux GOARCH=amd64 go build -o send2opsgenie send2opsgenie.go
+      - name: Compressing Linux Package
+        run: |
+          cd .release/oec-linux/
+          zip -r opsgenie-${{ env.INTEGRATION_NAME }}-${{ env.INTEGRATION_VERSION }}-linux-amd64.zip ./${{ env.INTEGRATION_FOLDER }}
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: Linux Artifact
+          path: .release/oec-linux/*.zip
+      - name: Upload
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.setup.outputs.upload_url }}
+          asset_path: .release/oec-linux/opsgenie-${{ env.INTEGRATION_NAME }}-${{ env.INTEGRATION_VERSION }}-linux-amd64.zip
+          asset_name: opsgenie-${{ env.INTEGRATION_NAME }}-${{ env.INTEGRATION_VERSION }}-linux-amd64.zip
+          asset_content_type: application/zip
   rpm:
     name: RPM
     runs-on: ubuntu-latest
-    needs: [setup]
+    needs: [ setup ]
+    env:
+      INTEGRATION_NAME: ${{ needs.setup.outputs.integration_name }}
+      INTEGRATION_VERSION: ${{ needs.setup.outputs.integration_version }}
     if: github.ref == 'refs/heads/master'
     steps:
-    - name: Set up Go 1.x
-      uses: actions/setup-go@v2
-      with:
-        go-version: ^1.13
-      id: go
-    - name: Check out code into the Go module directory
-      uses: actions/checkout@v2
-    - name: Create Output Directory
-      run: mkdir -p .release/oec-rpm
-    - name: Download Asset
-      uses: i3h/download-release-asset@v1.2.0
-      with:
-        owner: opsgenie
-        repo: oec
-        tag: ${{ github.event.inputs.oec-version }}
-        file: oec-linux-amd64-${{ github.event.inputs.oec-version }}.zip
-    - name: Extracting Linux Package
-      run: unzip -qq oec-linux-amd64-${{ github.event.inputs.oec-version }}.zip -d .release/oec-rpm
-    - name: Copy SPEC Files
-      run: cp -R release/oec-builder/oec-rpm/. .release/oec-rpm
-    - name: Copy Integration Files
-      run: cp -R ${{ github.event.inputs.integration }}/. .release/oec-rpm/oec-scripts
-    - name: Check incomming part exists
-      id: check_files
-      uses: andstor/file-existence-action@v1
-      with:
-        files: ".release/oec-rpm/oec-scripts/opsgenie-${{ env.INTEGRATION_NAME }}"
-      env:
-        INTEGRATION_NAME: ${{ needs.setup.outputs.integration_name }}
-        INTEGRATION_VERSION: ${{ needs.setup.outputs.integration_version }}
-    - name: "Release Incomming Part"
-      working-directory: .release
-      if: steps.check_files.outputs.files_exists == 'true'
-      run: |
-        INTEGRATION_PATH=oec-rpm/oec-scripts/opsgenie-${INTEGRATION_NAME}
-        echo ${INTEGRATION_PATH}
-        go get -u github.com/alexcesaro/log && \
-        cd ${INTEGRATION_PATH} && \
-        GOOS=linux GOARCH=amd64 go build -o send2opsgenie send2opsgenie.go
-      env:
-        INTEGRATION_NAME: ${{ needs.setup.outputs.integration_name }}
-        INTEGRATION_VERSION: ${{ needs.setup.outputs.integration_version }}
-    - name: Create RPM Package 
-      working-directory: .release/oec-rpm
-      run: |
-        sed -i "s|<path_of_script>|$RPM_BUILD_ROOT/home/opsgenie/oec/scripts/actionExecutor.py|" oec-scripts/conf/config.json
-        sed -i "s|<path_of_output_file_of_script>|$RPM_BUILD_ROOT/home/opsgenie/oec/output/output.txt|" oec-scripts/conf/config.json
-        sed -i "s/<local | git>/local/g" oec-scripts/conf/config.json
+      - name: Set up Go 1.x
+        uses: actions/setup-go@v2
+        with:
+          go-version: ^1.13
+        id: go
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v2
+      - name: Create Output Directory
+        run: mkdir -p .release/oec-rpm
+      - name: Download Asset
+        uses: i3h/download-release-asset@v1.2.0
+        with:
+          owner: opsgenie
+          repo: oec
+          tag: ${{ github.event.inputs.oec-version }}
+          file: oec-linux-amd64-${{ github.event.inputs.oec-version }}.zip
+      - name: Extracting Linux Package
+        run: unzip -qq oec-linux-amd64-${{ github.event.inputs.oec-version }}.zip -d .release/oec-rpm
+      - name: Copy SPEC Files
+        run: cp -R release/oec-builder/oec-rpm/. .release/oec-rpm
+      - name: Copy Integration Files
+        run: cp -R ${{ github.event.inputs.integration }}/. .release/oec-rpm/oec-scripts
+      - name: Check incomming part exists
+        id: check_files
+        uses: andstor/file-existence-action@v1
+        with:
+          files: ".release/oec-rpm/oec-scripts/opsgenie-${{ env.INTEGRATION_NAME }}"
+      - name: "Release Incomming Part"
+        working-directory: .release
+        if: steps.check_files.outputs.files_exists == 'true'
+        run: |
+          INTEGRATION_PATH=oec-rpm/oec-scripts/opsgenie-${INTEGRATION_NAME}
+          echo ${INTEGRATION_PATH}
+          go get -u github.com/alexcesaro/log && \
+          cd ${INTEGRATION_PATH} && \
+          GOOS=linux GOARCH=amd64 go build -o send2opsgenie send2opsgenie.go
+      - name: Create RPM Package
+        working-directory: .release/oec-rpm
+        run: |
+          sed -i "s|<path_of_script>|$RPM_BUILD_ROOT/home/opsgenie/oec/scripts/actionExecutor.py|" oec-scripts/conf/config.json
+          sed -i "s|<path_of_output_file_of_script>|$RPM_BUILD_ROOT/home/opsgenie/oec/output/output.txt|" oec-scripts/conf/config.json
+          sed -i "s/<local | git>/local/g" oec-scripts/conf/config.json
 
-        sed -i "s/%VERSION%/${INTEGRATION_VERSION}/g" SPECS/oec.spec
-        sed -i "s/%VERSION%/${INTEGRATION_VERSION}/g" SPECS/oec-rhel6.spec
+          sed -i "s/%VERSION%/${INTEGRATION_VERSION}/g" SPECS/oec.spec
+          sed -i "s/%VERSION%/${INTEGRATION_VERSION}/g" SPECS/oec-rhel6.spec
 
-        sed -i "s/%INTEGRATION%/opsgenie-${INTEGRATION_NAME}/g" SPECS/oec.spec
-        sed -i "s/%INTEGRATION%/opsgenie-${INTEGRATION_NAME}/g" SPECS/oec-rhel6.spec
+          sed -i "s/%INTEGRATION%/opsgenie-${INTEGRATION_NAME}/g" SPECS/oec.spec
+          sed -i "s/%INTEGRATION%/opsgenie-${INTEGRATION_NAME}/g" SPECS/oec-rhel6.spec
 
-        rpmbuild --target=x86_64 -ba SPECS/oec.spec
-        rpmbuild --target=x86_64 -ba SPECS/oec-rhel6.spec
-      env:
-        INTEGRATION_NAME: ${{ needs.setup.outputs.integration_name }}
-        INTEGRATION_VERSION: ${{ needs.setup.outputs.integration_version }}
-    - name: Move RPM Package
-      env:
-        INTEGRATION_NAME: ${{ needs.setup.outputs.integration_name }}
-        INTEGRATION_VERSION: ${{ needs.setup.outputs.integration_version }}
-      run: mv ~/rpmbuild/RPMS/x86_64/opsgenie-${{ env.INTEGRATION_NAME }}-${{ env.INTEGRATION_VERSION }}-1.x86_64.rpm .release/oec-rpm/opsgenie-${{ env.INTEGRATION_NAME }}-${{ env.INTEGRATION_VERSION }}.x86_64.rpm
-    - name: Move RHEL6 Package
-      env:
-        INTEGRATION_NAME: ${{ needs.setup.outputs.integration_name }}
-        INTEGRATION_VERSION: ${{ needs.setup.outputs.integration_version }}
-      run: mv ~/rpmbuild/RPMS/x86_64/opsgenie-${{ env.INTEGRATION_NAME }}-rhel6-${{ env.INTEGRATION_VERSION }}-1.x86_64.rpm .release/oec-rpm/opsgenie-${{ env.INTEGRATION_NAME }}-${{ env.INTEGRATION_VERSION }}.rhel6.x86_64.rpm
-    - name: Upload RPM Artifact
-      uses: actions/upload-artifact@v2
-      env:
-        INTEGRATION_NAME: ${{ needs.setup.outputs.integration_name }}
-        INTEGRATION_VERSION: ${{ needs.setup.outputs.integration_version }}
-      with:
-        name: RPM Artifact
-        path: .release/oec-rpm/opsgenie-${{ env.INTEGRATION_NAME }}-${{ env.INTEGRATION_VERSION }}.x86_64.rpm
-    - name: Upload RHEL6 Artifact
-      uses: actions/upload-artifact@v2
-      env:
-        INTEGRATION_NAME: ${{ needs.setup.outputs.integration_name }}
-        INTEGRATION_VERSION: ${{ needs.setup.outputs.integration_version }}
-      with:
-        name: RHEL6 Artifact
-        path: .release/oec-rpm/opsgenie-${{ env.INTEGRATION_NAME }}-${{ env.INTEGRATION_VERSION }}.rhel6.x86_64.rpm
-    - name: Upload RPM
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        INTEGRATION_NAME: ${{ needs.setup.outputs.integration_name }}
-        INTEGRATION_VERSION: ${{ needs.setup.outputs.integration_version }}
-      with:
-        upload_url: ${{ needs.setup.outputs.upload_url }}
-        asset_path: .release/oec-rpm/opsgenie-${{ env.INTEGRATION_NAME }}-${{ env.INTEGRATION_VERSION }}.x86_64.rpm
-        asset_name: opsgenie-${{ env.INTEGRATION_NAME }}-${{ env.INTEGRATION_VERSION }}.x86_64.rpm
-        asset_content_type: application/octet-stream
-    - name: Upload RHEL6
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        INTEGRATION_NAME: ${{ needs.setup.outputs.integration_name }}
-        INTEGRATION_VERSION: ${{ needs.setup.outputs.integration_version }}
-      with:
-        upload_url: ${{ needs.setup.outputs.upload_url }}
-        asset_path: .release/oec-rpm/opsgenie-${{ env.INTEGRATION_NAME }}-${{ env.INTEGRATION_VERSION }}.rhel6.x86_64.rpm
-        asset_name: opsgenie-${{ env.INTEGRATION_NAME }}-${{ env.INTEGRATION_VERSION }}.rhel6.x86_64.rpm
-        asset_content_type: application/octet-stream
+          rpmbuild --target=x86_64 -ba SPECS/oec.spec
+          rpmbuild --target=x86_64 -ba SPECS/oec-rhel6.spec
+      - name: Move RPM Package
+        run: mv ~/rpmbuild/RPMS/x86_64/opsgenie-${{ env.INTEGRATION_NAME }}-${{ env.INTEGRATION_VERSION }}-1.x86_64.rpm .release/oec-rpm/opsgenie-${{ env.INTEGRATION_NAME }}-${{ env.INTEGRATION_VERSION }}.x86_64.rpm
+      - name: Move RHEL6 Package
+        run: mv ~/rpmbuild/RPMS/x86_64/opsgenie-${{ env.INTEGRATION_NAME }}-rhel6-${{ env.INTEGRATION_VERSION }}-1.x86_64.rpm .release/oec-rpm/opsgenie-${{ env.INTEGRATION_NAME }}-${{ env.INTEGRATION_VERSION }}.rhel6.x86_64.rpm
+      - name: Upload RPM Artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: RPM Artifact
+          path: .release/oec-rpm/opsgenie-${{ env.INTEGRATION_NAME }}-${{ env.INTEGRATION_VERSION }}.x86_64.rpm
+      - name: Upload RHEL6 Artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: RHEL6 Artifact
+          path: .release/oec-rpm/opsgenie-${{ env.INTEGRATION_NAME }}-${{ env.INTEGRATION_VERSION }}.rhel6.x86_64.rpm
+      - name: Upload RPM
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.setup.outputs.upload_url }}
+          asset_path: .release/oec-rpm/opsgenie-${{ env.INTEGRATION_NAME }}-${{ env.INTEGRATION_VERSION }}.x86_64.rpm
+          asset_name: opsgenie-${{ env.INTEGRATION_NAME }}-${{ env.INTEGRATION_VERSION }}.x86_64.rpm
+          asset_content_type: application/octet-stream
+      - name: Upload RHEL6
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.setup.outputs.upload_url }}
+          asset_path: .release/oec-rpm/opsgenie-${{ env.INTEGRATION_NAME }}-${{ env.INTEGRATION_VERSION }}.rhel6.x86_64.rpm
+          asset_name: opsgenie-${{ env.INTEGRATION_NAME }}-${{ env.INTEGRATION_VERSION }}.rhel6.x86_64.rpm
+          asset_content_type: application/octet-stream
   deb:
     name: DEB
     runs-on: ubuntu-latest
-    needs: [setup]
+    needs: [ setup ]
+    env:
+      INTEGRATION_NAME: ${{ needs.setup.outputs.integration_name }}
+      INTEGRATION_VERSION: ${{ needs.setup.outputs.integration_version }}
     if: github.ref == 'refs/heads/master'
     steps:
-    - name: Set up Go 1.x
-      uses: actions/setup-go@v2
-      with:
-        go-version: ^1.13
-      id: go
-    - name: Check out code into the Go module directory
-      uses: actions/checkout@v2
-    - name: Create Output Directory
-      run: mkdir -p .release/oec-deb/usr/local/bin
-    - name: Download Asset
-      uses: i3h/download-release-asset@v1.2.0
-      with:
-        owner: opsgenie
-        repo: oec
-        tag: ${{ github.event.inputs.oec-version }}
-        file: oec-linux-amd64-${{ github.event.inputs.oec-version }}.zip
-    - name: Extracting Linux Package
-      run: unzip -qq oec-linux-amd64-${{ github.event.inputs.oec-version }}.zip -d .release/oec-deb/usr/local/bin
-    - name: Copy SPEC Files
-      run: cp -R release/oec-builder/oec-deb/. .release/oec-deb
-    - name: Create Output Directory
-      run: mkdir -p .release/oec-deb/home/opsgenie/oec
-    - name: Copy Integration Files
-      run: cp -R ${{ github.event.inputs.integration }}/. .release/oec-deb/home/opsgenie/oec
-    - name: Check incomming part exists
-      id: check_files
-      uses: andstor/file-existence-action@v1
-      with:
-        files: ".release/oec-deb/home/opsgenie/oec/opsgenie-${{ env.INTEGRATION_NAME }}"
-      env:
-        INTEGRATION_NAME: ${{ needs.setup.outputs.integration_name }}
-        INTEGRATION_VERSION: ${{ needs.setup.outputs.integration_version }}
-    - name: "Release Incomming Part"
-      working-directory: .release
-      if: steps.check_files.outputs.files_exists == 'true'
-      run: |
-        INTEGRATION_PATH=oec-deb/home/opsgenie/oec/opsgenie-${INTEGRATION_NAME}
-        echo ${INTEGRATION_PATH}
-        go get -u github.com/alexcesaro/log && \
-        cd ${INTEGRATION_PATH} && \
-        GOOS=linux GOARCH=amd64 go build -o send2opsgenie send2opsgenie.go
-      env:
-        INTEGRATION_NAME: ${{ needs.setup.outputs.integration_name }}
-        INTEGRATION_VERSION: ${{ needs.setup.outputs.integration_version }}
-    - name: Create Deb Package 
-      working-directory: .release/
-      run: |
-        sed -i "s|<path_of_script>|/home/opsgenie/oec/scripts/actionExecutor.py|" oec-deb/home/opsgenie/oec/conf/config.json
-        sed -i "s|<path_of_output_file_of_script>|/home/opsgenie/oec/output/output.txt|" oec-deb/home/opsgenie/oec/conf/config.json
-        sed -i "s/<local | git>/local/g" oec-deb/home/opsgenie/oec/conf/config.json
+      - name: Set up Go 1.x
+        uses: actions/setup-go@v2
+        with:
+          go-version: ^1.13
+        id: go
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v2
+      - name: Create Output Directory
+        run: mkdir -p .release/oec-deb/usr/local/bin
+      - name: Download Asset
+        uses: i3h/download-release-asset@v1.2.0
+        with:
+          owner: opsgenie
+          repo: oec
+          tag: ${{ github.event.inputs.oec-version }}
+          file: oec-linux-amd64-${{ github.event.inputs.oec-version }}.zip
+      - name: Extracting Linux Package
+        run: unzip -qq oec-linux-amd64-${{ github.event.inputs.oec-version }}.zip -d .release/oec-deb/usr/local/bin
+      - name: Copy SPEC Files
+        run: cp -R release/oec-builder/oec-deb/. .release/oec-deb
+      - name: Create Output Directory
+        run: mkdir -p .release/oec-deb/home/opsgenie/oec
+      - name: Copy Integration Files
+        run: cp -R ${{ github.event.inputs.integration }}/. .release/oec-deb/home/opsgenie/oec
+      - name: Check incomming part exists
+        id: check_files
+        uses: andstor/file-existence-action@v1
+        with:
+          files: ".release/oec-deb/home/opsgenie/oec/opsgenie-${{ env.INTEGRATION_NAME }}"
+      - name: "Release Incomming Part"
+        working-directory: .release
+        if: steps.check_files.outputs.files_exists == 'true'
+        run: |
+          INTEGRATION_PATH=oec-deb/home/opsgenie/oec/opsgenie-${{ env.INTEGRATION_NAME }}
+          echo ${INTEGRATION_PATH}
+          go get -u github.com/alexcesaro/log && \
+          cd ${INTEGRATION_PATH} && \
+          GOOS=linux GOARCH=amd64 go build -o send2opsgenie send2opsgenie.go
+      - name: Create Deb Package
+        working-directory: .release/
+        run: |
+          sed -i "s|<path_of_script>|/home/opsgenie/oec/scripts/actionExecutor.py|" oec-deb/home/opsgenie/oec/conf/config.json
+          sed -i "s|<path_of_output_file_of_script>|/home/opsgenie/oec/output/output.txt|" oec-deb/home/opsgenie/oec/conf/config.json
+          sed -i "s/<local | git>/local/g" oec-deb/home/opsgenie/oec/conf/config.json
 
-        sed -i "s/%VERSION%/${INTEGRATION_VERSION}/g" oec-deb/DEBIAN/control
-        sed -i "s/%INTEGRATION%/${INTEGRATION_NAME}/g" oec-deb/DEBIAN/control
+          sed -i "s/%VERSION%/${INTEGRATION_VERSION}/g" oec-deb/DEBIAN/control
+          sed -i "s/%INTEGRATION%/${INTEGRATION_NAME}/g" oec-deb/DEBIAN/control
 
-        mkdir deb-package
-        dpkg-deb -b  oec-deb deb-package
-      env:
-        INTEGRATION_NAME: ${{ needs.setup.outputs.integration_name }}
-        INTEGRATION_VERSION: ${{ needs.setup.outputs.integration_version }}
-    - name: Move Deb Package
-      env:
-        INTEGRATION_NAME: ${{ needs.setup.outputs.integration_name }}
-        INTEGRATION_VERSION: ${{ needs.setup.outputs.integration_version }}
-      run: mv .release/deb-package/*.deb .release/oec-deb/opsgenie-${{ env.INTEGRATION_NAME }}_${{ env.INTEGRATION_VERSION }}_amd64.deb
-    - name: Upload Artifact
-      uses: actions/upload-artifact@v2
-      with:
-        name: Debian Artifact
-        path: .release/oec-deb/opsgenie-${{ env.INTEGRATION_NAME }}_${{ env.INTEGRATION_VERSION }}_amd64.deb
-      env:
-        INTEGRATION_NAME: ${{ needs.setup.outputs.integration_name }}
-        INTEGRATION_VERSION: ${{ needs.setup.outputs.integration_version }}
-    - name: Upload 
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        INTEGRATION_NAME: ${{ needs.setup.outputs.integration_name }}
-        INTEGRATION_VERSION: ${{ needs.setup.outputs.integration_version }}
-      with:
-        upload_url: ${{ needs.setup.outputs.upload_url }}
-        asset_path: .release/oec-deb/opsgenie-${{ env.INTEGRATION_NAME }}_${{ env.INTEGRATION_VERSION }}_amd64.deb
-        asset_name: opsgenie-${{ env.INTEGRATION_NAME }}_${{ env.INTEGRATION_VERSION }}_amd64.deb
-        asset_content_type: application/octet-stream
+          mkdir deb-package
+          dpkg-deb -b  oec-deb deb-package
+      - name: Move Deb Package
+        run: mv .release/deb-package/*.deb .release/oec-deb/opsgenie-${{ env.INTEGRATION_NAME }}_${{ env.INTEGRATION_VERSION }}_amd64.deb
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: Debian Artifact
+          path: .release/oec-deb/opsgenie-${{ env.INTEGRATION_NAME }}_${{ env.INTEGRATION_VERSION }}_amd64.deb
+      - name: Upload
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.setup.outputs.upload_url }}
+          asset_path: .release/oec-deb/opsgenie-${{ env.INTEGRATION_NAME }}_${{ env.INTEGRATION_VERSION }}_amd64.deb
+          asset_name: opsgenie-${{ env.INTEGRATION_NAME }}_${{ env.INTEGRATION_VERSION }}_amd64.deb
+          asset_content_type: application/octet-stream
   win32:
     name: Windows 32
     runs-on: ubuntu-latest
-    needs: [setup]
-    if: github.ref == 'refs/heads/master'    
+    needs: [ setup ]
+    env:
+      INTEGRATION_NAME: ${{ needs.setup.outputs.integration_name }}
+      INTEGRATION_VERSION: ${{ needs.setup.outputs.integration_version }}
+      INTEGRATION_FOLDER: opsgenie-${{ needs.setup.outputs.integration_name }}-${{ needs.setup.outputs.integration_version }}-win-386
+    if: github.ref == 'refs/heads/master'
     steps:
-    - name: Set up Go 1.x
-      uses: actions/setup-go@v2
-      with:
-        go-version: ^1.13
-      id: go
-    - name: Check out code into the Go module directory
-      uses: actions/checkout@v2
-    - name: Create Output Directory
-      run: mkdir -p .release/oec-win32
-    - name: Download Asset
-      uses: i3h/download-release-asset@v1.2.0
-      with:
-        owner: opsgenie
-        repo: oec
-        tag: ${{ github.event.inputs.oec-version }}
-        file: oec-win-386-${{ github.event.inputs.oec-version }}.zip
-    - name: Extracting Win32 Package
-      run: unzip -qq oec-win-386-${{ github.event.inputs.oec-version }}.zip -d .release/oec-win32
-    - name: Copy Integration Files
-      run: cp -R ${{ github.event.inputs.integration }}/. .release/oec-win32
-    - name: Remove http script (todo remove when http version is released)
-      run: rm -f .release/oec-win32/scripts/http.py
-    - name: Check incomming part exists
-      id: check_files
-      uses: andstor/file-existence-action@v1
-      with:
-        files: ".release/oec-win32/opsgenie-${{ env.INTEGRATION_NAME }}"
-      env:
-        INTEGRATION_NAME: ${{ needs.setup.outputs.integration_name }}
-        INTEGRATION_VERSION: ${{ needs.setup.outputs.integration_version }}
-    - name: "Release Incomming Part"
-      working-directory: .release
-      if: steps.check_files.outputs.files_exists == 'true'
-      run: |
-        INTEGRATION_PATH=oec-win32/opsgenie-${INTEGRATION_NAME}
-        echo ${INTEGRATION_PATH}
-        go get -u github.com/alexcesaro/log && \
-        cd ${INTEGRATION_PATH} && \
-        GOOS=windows GOARCH=386 go build -o send2opsgenie32.exe send2opsgenie.go
-      env:
-        INTEGRATION_NAME: ${{ needs.setup.outputs.integration_name }}
-        INTEGRATION_VERSION: ${{ needs.setup.outputs.integration_version }}
-    - name: Compressing Win32 Package
-      run: zip -qq -j -r .release/oec-win32/opsgenie-${INTEGRATION_NAME}-${INTEGRATION_VERSION}-win-386.zip .release/oec-win32/
-      env:
-        INTEGRATION_NAME: ${{ needs.setup.outputs.integration_name }}
-        INTEGRATION_VERSION: ${{ needs.setup.outputs.integration_version }}
-    - name: Upload Artifact
-      uses: actions/upload-artifact@v2
-      with:
-        name: Win32 Artifact
-        path: .release/oec-win32/*.zip
-    - name: Upload
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        INTEGRATION_NAME: ${{ needs.setup.outputs.integration_name }}
-        INTEGRATION_VERSION: ${{ needs.setup.outputs.integration_version }}
-      with:
-        upload_url: ${{ needs.setup.outputs.upload_url }}
-        asset_path: .release/oec-win32/opsgenie-${{ env.INTEGRATION_NAME }}-${{ env.INTEGRATION_VERSION }}-win-386.zip
-        asset_name: opsgenie-${{ env.INTEGRATION_NAME }}-${{ env.INTEGRATION_VERSION }}-win-386.zip
-        asset_content_type: application/zip
+      - name: Set up Go 1.x
+        uses: actions/setup-go@v2
+        with:
+          go-version: ^1.13
+        id: go
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v2
+      - name: Create Output Directory
+        run: mkdir -p .release/oec-win32/${{ env.INTEGRATION_FOLDER }}
+      - name: Download Asset
+        uses: i3h/download-release-asset@v1.2.0
+        with:
+          owner: opsgenie
+          repo: oec
+          tag: ${{ github.event.inputs.oec-version }}
+          file: oec-win-386-${{ github.event.inputs.oec-version }}.zip
+      - name: Extracting Win32 Package
+        run: unzip -qq oec-win-386-${{ github.event.inputs.oec-version }}.zip -d .release/oec-win32/${{ env.INTEGRATION_FOLDER }}
+      - name: Copy OEC Service Conf
+        run: cp -R release/oec-builder/oec-win32/oecService.json.example .release/oec-win32/${{ env.INTEGRATION_FOLDER }}
+      - name: Copy Integration Files
+        run: cp -R ${{ github.event.inputs.integration }}/. .release/oec-win32/${{ env.INTEGRATION_FOLDER }}
+      - name: Remove http script (todo remove when http version is released)
+        run: rm -f .release/oec-win32/${{ env.INTEGRATION_FOLDER }}/scripts/http.py
+      - name: Check incomming part exists
+        id: check_files
+        uses: andstor/file-existence-action@v1
+        with:
+          files: ".release/oec-win32/${{ env.INTEGRATION_FOLDER }}/opsgenie-${{ env.INTEGRATION_NAME }}"
+      - name: "Release Incomming Part"
+        working-directory: .release
+        if: steps.check_files.outputs.files_exists == 'true'
+        run: |
+          INTEGRATION_PATH=oec-win32/${{ env.INTEGRATION_FOLDER }}/opsgenie-${{ env.INTEGRATION_NAME }}
+          echo ${INTEGRATION_PATH}
+          go get -u github.com/alexcesaro/log && \
+          cd ${INTEGRATION_PATH} && \
+          GOOS=windows GOARCH=386 go build -o send2opsgenie32.exe send2opsgenie.go
+      - name: Compressing Win32 Package
+        run: |
+          cd .release/oec-win32/
+          zip -r ${{ env.INTEGRATION_FOLDER }}.zip ./${{ env.INTEGRATION_FOLDER }}
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: Win32 Artifact
+          path: .release/oec-win32/*.zip
+      - name: Upload
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.setup.outputs.upload_url }}
+          asset_path: .release/oec-win32/${{ env.INTEGRATION_FOLDER }}.zip
+          asset_name: ${{ env.INTEGRATION_FOLDER }}.zip
+          asset_content_type: application/zip
   win64:
     name: Windows 64
     runs-on: ubuntu-latest
-    needs: [setup]
-    if: github.ref == 'refs/heads/master'    
+    needs: [ setup ]
+    env:
+      INTEGRATION_NAME: ${{ needs.setup.outputs.integration_name }}
+      INTEGRATION_VERSION: ${{ needs.setup.outputs.integration_version }}
+      INTEGRATION_FOLDER: opsgenie-${{ needs.setup.outputs.integration_name }}-${{ needs.setup.outputs.integration_version }}-win-amd64
+    if: github.ref == 'refs/heads/master'
     steps:
-    - name: Set up Go 1.x
-      uses: actions/setup-go@v2
-      with:
-        go-version: ^1.13
-      id: go
-    - name: Check out code into the Go module directory
-      uses: actions/checkout@v2
-    - name: Create Output Directory
-      run: mkdir -p .release/oec-win64
-    - name: Download Asset
-      uses: i3h/download-release-asset@v1.2.0
-      with:
-        owner: opsgenie
-        repo: oec
-        tag: ${{ github.event.inputs.oec-version }}
-        file: oec-win-amd64-${{ github.event.inputs.oec-version }}.zip
-    - name: Extracting Win64 Package
-      run: unzip -qq oec-win-amd64-${{ github.event.inputs.oec-version }}.zip -d .release/oec-win64
-    - name: Copy Integration Files
-      run: cp -R ${{ github.event.inputs.integration }}/. .release/oec-win64
-    - name: Remove http script (todo remove when http version is released)
-      run: rm -f .release/oec-win64/scripts/http.py
-    - name: Check incomming part exists
-      id: check_files
-      uses: andstor/file-existence-action@v1
-      with:
-        files: ".release/oec-win64/opsgenie-${{ env.INTEGRATION_NAME }}"
-      env:
-        INTEGRATION_NAME: ${{ needs.setup.outputs.integration_name }}
-        INTEGRATION_VERSION: ${{ needs.setup.outputs.integration_version }}
-    - name: "Release Incomming Part"
-      working-directory: .release
-      if: steps.check_files.outputs.files_exists == 'true'
-      run: |
-        INTEGRATION_PATH=oec-win64/opsgenie-${INTEGRATION_NAME}
-        echo ${INTEGRATION_PATH}
-        go get -u github.com/alexcesaro/log && \
-        cd ${INTEGRATION_PATH} && \
-        GOOS=windows GOARCH=amd64 go build -o send2opsgenie32.exe send2opsgenie.go
-      env:
-        INTEGRATION_NAME: ${{ needs.setup.outputs.integration_name }}
-        INTEGRATION_VERSION: ${{ needs.setup.outputs.integration_version }}
-    - name: Compressing Win 64 Package
-      run: zip -qq -j -r .release/oec-win64/opsgenie-${INTEGRATION_NAME}-${INTEGRATION_VERSION}-win-amd64.zip .release/oec-win64/
-      env:
-        INTEGRATION_NAME: ${{ needs.setup.outputs.integration_name }}
-        INTEGRATION_VERSION: ${{ needs.setup.outputs.integration_version }}
-    - name: Upload Artifact
-      uses: actions/upload-artifact@v2
-      with:
-        name: Win64 Artifact
-        path: .release/oec-win64/*.zip
-    - name: Upload
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        INTEGRATION_NAME: ${{ needs.setup.outputs.integration_name }}
-        INTEGRATION_VERSION: ${{ needs.setup.outputs.integration_version }}
-      with:
-        upload_url: ${{ needs.setup.outputs.upload_url }}
-        asset_path: .release/oec-win64/opsgenie-${{ env.INTEGRATION_NAME }}-${{ env.INTEGRATION_VERSION }}-win-amd64.zip
-        asset_name: opsgenie-${{ env.INTEGRATION_NAME }}-${{ env.INTEGRATION_VERSION }}-win-amd64.zip
-        asset_content_type: application/zip
+      - name: Set up Go 1.x
+        uses: actions/setup-go@v2
+        with:
+          go-version: ^1.13
+        id: go
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v2
+      - name: Create Output Directory
+        run: mkdir -p .release/oec-win64/${{ env.INTEGRATION_FOLDER }}
+      - name: Download Asset
+        uses: i3h/download-release-asset@v1.2.0
+        with:
+          owner: opsgenie
+          repo: oec
+          tag: ${{ github.event.inputs.oec-version }}
+          file: oec-win-amd64-${{ github.event.inputs.oec-version }}.zip
+      - name: Extracting Win64 Package
+        run: unzip -qq oec-win-amd64-${{ github.event.inputs.oec-version }}.zip -d .release/oec-win64/${{ env.INTEGRATION_FOLDER }}
+      - name: Copy OEC Service Conf
+        run: cp -R release/oec-builder/oec-win64/oecService.json.example .release/oec-win64/${{ env.INTEGRATION_FOLDER }}
+      - name: Copy Integration Files
+        run: cp -R ${{ github.event.inputs.integration }}/. .release/oec-win64/${{ env.INTEGRATION_FOLDER }}
+      - name: Remove http script (todo remove when http version is released)
+        run: rm -f .release/oec-win64/${{ env.INTEGRATION_FOLDER }}/scripts/http.py
+      - name: Check incomming part exists
+        id: check_files
+        uses: andstor/file-existence-action@v1
+        with:
+          files: ".release/oec-win64/${{ env.INTEGRATION_FOLDER }}/opsgenie-${{ env.INTEGRATION_NAME }}"
+      - name: "Release Incomming Part"
+        working-directory: .release
+        if: steps.check_files.outputs.files_exists == 'true'
+        run: |
+          INTEGRATION_PATH=oec-win64/${{ env.INTEGRATION_FOLDER }}/opsgenie-${{ env.INTEGRATION_NAME }}
+          echo ${INTEGRATION_PATH}
+          go get -u github.com/alexcesaro/log && \
+          cd ${INTEGRATION_PATH} && \
+          GOOS=windows GOARCH=amd64 go build -o send2opsgenie32.exe send2opsgenie.go
+      - name: Compressing Win 64 Package
+        run: |
+          cd .release/oec-win64/
+          zip -r ${{ env.INTEGRATION_FOLDER }}.zip ./${{ env.INTEGRATION_FOLDER }}
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: Win64 Artifact
+          path: .release/oec-win64/*.zip
+      - name: Upload
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.setup.outputs.upload_url }}
+          asset_path: .release/oec-win64/${{ env.INTEGRATION_FOLDER }}.zip
+          asset_name: ${{ env.INTEGRATION_FOLDER }}.zip
+          asset_content_type: application/zip
