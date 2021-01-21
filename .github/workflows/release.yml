@@ -67,12 +67,12 @@ jobs:
       run: cp -R ${{ github.event.inputs.integration }}/. .release/oec-linux/${{ env.INTEGRATION_FOLDER }}
     - name: Remove http script (todo remove when http version is released)
       run: rm -f .release/oec-linux/${{ env.INTEGRATION_FOLDER }}/scripts/http.py
-    - name: Check incomming part exists
+    - name: Check Incoming part exists
       id: check_files
       uses: andstor/file-existence-action@v1
       with:
         files: ".release/oec-linux/${{ env.INTEGRATION_FOLDER }}/opsgenie-${{ env.INTEGRATION_NAME }}"
-    - name: "Release Incomming Part"
+    - name: "Release Incoming Part"
       working-directory: .release
       if: steps.check_files.outputs.files_exists == 'true'
       run: |
@@ -130,12 +130,12 @@ jobs:
       run: cp -R release/oec-builder/oec-rpm/. .release/oec-rpm
     - name: Copy Integration Files
       run: cp -R ${{ github.event.inputs.integration }}/. .release/oec-rpm/oec-scripts
-    - name: Check incomming part exists
+    - name: Check Incoming part exists
       id: check_files
       uses: andstor/file-existence-action@v1
       with:
         files: ".release/oec-rpm/oec-scripts/opsgenie-${{ env.INTEGRATION_NAME }}"
-    - name: "Release Incomming Part"
+    - name: "Release Incoming Part"
       working-directory: .release
       if: steps.check_files.outputs.files_exists == 'true'
       run: |
@@ -224,12 +224,12 @@ jobs:
       run: mkdir -p .release/oec-deb/home/opsgenie/oec
     - name: Copy Integration Files
       run: cp -R ${{ github.event.inputs.integration }}/. .release/oec-deb/home/opsgenie/oec
-    - name: Check incomming part exists
+    - name: Check Incoming part exists
       id: check_files
       uses: andstor/file-existence-action@v1
       with:
         files: ".release/oec-deb/home/opsgenie/oec/opsgenie-${{ env.INTEGRATION_NAME }}"
-    - name: "Release Incomming Part"
+    - name: "Release Incoming Part"
       working-directory: .release
       if: steps.check_files.outputs.files_exists == 'true'
       run: |
@@ -300,12 +300,12 @@ jobs:
       run: cp -R ${{ github.event.inputs.integration }}/. .release/oec-win32/${{ env.INTEGRATION_FOLDER }}
     - name: Remove http script (todo remove when http version is released)
       run: rm -f .release/oec-win32/${{ env.INTEGRATION_FOLDER }}/scripts/http.py
-    - name: Check incomming part exists
+    - name: Check Incoming part exists
       id: check_files
       uses: andstor/file-existence-action@v1
       with:
         files: ".release/oec-win32/${{ env.INTEGRATION_FOLDER }}/opsgenie-${{ env.INTEGRATION_NAME }}"
-    - name: "Release Incomming Part"
+    - name: "Release Incoming Part"
       working-directory: .release
       if: steps.check_files.outputs.files_exists == 'true'
       run: |
@@ -366,12 +366,12 @@ jobs:
       run: cp -R ${{ github.event.inputs.integration }}/. .release/oec-win64/${{ env.INTEGRATION_FOLDER }}
     - name: Remove http script (todo remove when http version is released)
       run: rm -f .release/oec-win64/${{ env.INTEGRATION_FOLDER }}/scripts/http.py
-    - name: Check incomming part exists
+    - name: Check Incoming part exists
       id: check_files
       uses: andstor/file-existence-action@v1
       with:
         files: ".release/oec-win64/${{ env.INTEGRATION_FOLDER }}/opsgenie-${{ env.INTEGRATION_NAME }}"
-    - name: "Release Incomming Part"
+    - name: "Release Incoming Part"
       working-directory: .release
       if: steps.check_files.outputs.files_exists == 'true'
       run: |
