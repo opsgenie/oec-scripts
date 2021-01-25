@@ -9,7 +9,7 @@
 | :-------------: |
 | [BMCFootprintsV11](https://github.com/opsgenie/oec-scripts/releases/tag/BMCFootprintsV11-1.1.1_oec-1.1.1) |
 | [BMCFootprintsV12](https://github.com/opsgenie/oec-scripts/releases/tag/BMCFootprintsV12-1.1.1_oec-1.1.0) |
-| [BMCRemedy](https://github.com/opsgenie/oec-scripts/releases/tag/BMCRemedy-1.1.1_oec-1.1.0) |
+| [BMCRemedy](https://github.com/opsgenie/oec-scripts/releases/tag/BMCRemedy-1.1.1_oec-1.1.1) |
 | [Cherwell](https://github.com/opsgenie/oec-scripts/releases/tag/Cherwell-1.1.2_oec-1.1.0) |
 | [DynatraceAppMon](https://github.com/opsgenie/oec-scripts/releases/tag/DynatraceAppMon-1.1.1_oec-1.1.0) |
 | [Icinga](https://github.com/opsgenie/oec-scripts/releases/tag/Icinga-1.1.2_oec-1.1.0) |
