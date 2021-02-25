@@ -1,4 +1,4 @@
-Name: %INTEGRATION%
+Name: opsgenie-%INTEGRATION%
 Version: %VERSION%
 Summary: OEC (%INTEGRATION%) for Connecting On-Premise Monitoring and ITSM Tools
 Release: 1

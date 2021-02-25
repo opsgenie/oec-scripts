@@ -1,4 +1,4 @@
-Name: %INTEGRATION%-rhel6
+Name: opsgenie-%INTEGRATION%-rhel6
 Version: %VERSION%
 Summary: OEC (%INTEGRATION%) for Connecting On-Premise Monitoring and ITSM Tools
 Release: 1
