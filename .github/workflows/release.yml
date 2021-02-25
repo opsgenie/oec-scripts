@@ -246,7 +246,7 @@ jobs:
         sed -i "s/<local | git>/local/g" oec-deb/home/opsgenie/oec/conf/config.json
 
         sed -i "s/%VERSION%/${INTEGRATION_VERSION}/g" oec-deb/DEBIAN/control
-        sed -i "s/%INTEGRATION%/${INTEGRATION_NAME}/g" oec-deb/DEBIAN/control
+        sed -i "s/%INTEGRATION%/opsgenie-y${INTEGRATION_NAME}/g" oec-deb/DEBIAN/control
 
         mkdir deb-package
         dpkg-deb -b  oec-deb deb-package
