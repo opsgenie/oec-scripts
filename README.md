@@ -3,7 +3,8 @@
 ## Opsgenie Edge Connector (OEC) custom scripts
   
 > For more information about OEC: https://github.com/opsgenie/oec
-
+>
+> Please note that, new deb package releases will have opsgenie prefix in package names. This might cause a problem when you try to upgrade your existing package. To solve that problem, you need to remove the old package and install the new one.
 
 | Latest releases |
 | :-------------: |
