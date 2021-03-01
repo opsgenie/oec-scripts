@@ -80,7 +80,7 @@ jobs:
         echo ${INTEGRATION_PATH}
         go get -u github.com/alexcesaro/log && \
         cd ${INTEGRATION_PATH} && \
-        GO111MODULE=off GOOS=linux GOARCH=amd64 go build -o send2opsgenie send2opsgenie.go
+        GO111MODULE=auto GOOS=linux GOARCH=amd64 go build -o send2opsgenie send2opsgenie.go
     - name: Compressing Linux Package
       run: |
           cd .release/oec-linux/
@@ -143,7 +143,7 @@ jobs:
         echo ${INTEGRATION_PATH}
         go get -u github.com/alexcesaro/log && \
         cd ${INTEGRATION_PATH} && \
-        GO111MODULE=off GOOS=linux GOARCH=amd64 go build -o send2opsgenie send2opsgenie.go
+        GO111MODULE=auto GOOS=linux GOARCH=amd64 go build -o send2opsgenie send2opsgenie.go
     - name: Create RPM Package 
       working-directory: .release/oec-rpm
       run: |
@@ -237,7 +237,7 @@ jobs:
         echo ${INTEGRATION_PATH}
         go get -u github.com/alexcesaro/log && \
         cd ${INTEGRATION_PATH} && \
-        GO111MODULE=off GOOS=linux GOARCH=amd64 go build -o send2opsgenie send2opsgenie.go
+        GO111MODULE=auto GOOS=linux GOARCH=amd64 go build -o send2opsgenie send2opsgenie.go
     - name: Create Deb Package 
       working-directory: .release/
       run: |
@@ -313,7 +313,7 @@ jobs:
         echo ${INTEGRATION_PATH}
         go get -u github.com/alexcesaro/log && \
         cd ${INTEGRATION_PATH} && \
-        GO111MODULE=off GOOS=windows GOARCH=386 go build -o send2opsgenie32.exe send2opsgenie.go
+        GO111MODULE=auto GOOS=windows GOARCH=386 go build -o send2opsgenie32.exe send2opsgenie.go
     - name: Compressing Win32 Package
       run: |
           cd .release/oec-win32/
@@ -379,7 +379,7 @@ jobs:
         echo ${INTEGRATION_PATH}
         go get -u github.com/alexcesaro/log && \
         cd ${INTEGRATION_PATH} && \
-        GO111MODULE=off GOOS=windows GOARCH=amd64 go build -o send2opsgenie32.exe send2opsgenie.go
+        GO111MODULE=auto GOOS=windows GOARCH=amd64 go build -o send2opsgenie32.exe send2opsgenie.go
     - name: Compressing Win 64 Package
       run: |
           cd .release/oec-win64/
