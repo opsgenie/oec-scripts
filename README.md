@@ -22,7 +22,7 @@
 | [NagiosXI](https://github.com/opsgenie/oec-scripts/releases/tag/NagiosXI-1.1.2_oec-1.1.2) |
 | [OEC](https://github.com/opsgenie/oec-scripts/releases/tag/OEC-1.1.2_oec-1.1.2) |
 | [OP5](https://github.com/opsgenie/oec-scripts/releases/tag/OP5-1.1.2_oec-1.1.2) |
-| [PRTG](https://github.com/opsgenie/oec-scripts/releases/tag/PRTG-1.1.1_oec-1.1.2) |
+| [PRTG](https://github.com/opsgenie/oec-scripts/releases/tag/PRTG-1.1.2_oec-1.1.2) |
 | [Solarwinds](https://github.com/opsgenie/oec-scripts/releases/tag/Solarwinds-1.1.1_oec-1.1.2) |
 | [SolarwindsMSPNCentral](https://github.com/opsgenie/oec-scripts/releases/tag/SolarwindsMSPNCentral-1.1.1_oec-1.1.2) |
 | [SolarwindsWebHelpdesk](https://github.com/opsgenie/oec-scripts/releases/tag/SolarwindsWebHelpdesk-1.1.1_oec-1.1.2) |
