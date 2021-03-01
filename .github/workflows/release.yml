@@ -78,9 +78,9 @@ jobs:
       run: |
         INTEGRATION_PATH=oec-linux/${{ env.INTEGRATION_FOLDER }}/opsgenie-${{ env.INTEGRATION_NAME }}
         echo ${INTEGRATION_PATH}
-        go get -u github.com/alexcesaro/log && \
+        GO111MODULE=auto go get -u github.com/alexcesaro/log && \
         cd ${INTEGRATION_PATH} && \
-        GO111MODULE=auto GOOS=linux GOARCH=amd64 go build -o send2opsgenie send2opsgenie.go
+        GOOS=linux GOARCH=amd64 go build -o send2opsgenie send2opsgenie.go
     - name: Compressing Linux Package
       run: |
           cd .release/oec-linux/
@@ -141,9 +141,9 @@ jobs:
       run: |
         INTEGRATION_PATH=oec-rpm/oec-scripts/opsgenie-${INTEGRATION_NAME}
         echo ${INTEGRATION_PATH}
-        go get -u github.com/alexcesaro/log && \
+        GO111MODULE=auto go get -u github.com/alexcesaro/log && \
         cd ${INTEGRATION_PATH} && \
-        GO111MODULE=auto GOOS=linux GOARCH=amd64 go build -o send2opsgenie send2opsgenie.go
+        GOOS=linux GOARCH=amd64 go build -o send2opsgenie send2opsgenie.go
     - name: Create RPM Package 
       working-directory: .release/oec-rpm
       run: |
@@ -235,9 +235,9 @@ jobs:
       run: |
         INTEGRATION_PATH=oec-deb/home/opsgenie/oec/opsgenie-${{ env.INTEGRATION_NAME }}
         echo ${INTEGRATION_PATH}
-        go get -u github.com/alexcesaro/log && \
+        GO111MODULE=auto go get -u github.com/alexcesaro/log && \
         cd ${INTEGRATION_PATH} && \
-        GO111MODULE=auto GOOS=linux GOARCH=amd64 go build -o send2opsgenie send2opsgenie.go
+        GOOS=linux GOARCH=amd64 go build -o send2opsgenie send2opsgenie.go
     - name: Create Deb Package 
       working-directory: .release/
       run: |
@@ -311,9 +311,9 @@ jobs:
       run: |
         INTEGRATION_PATH=oec-win32/${{ env.INTEGRATION_FOLDER }}/opsgenie-${{ env.INTEGRATION_NAME }}
         echo ${INTEGRATION_PATH}
-        go get -u github.com/alexcesaro/log && \
+        GO111MODULE=auto go get -u github.com/alexcesaro/log && \
         cd ${INTEGRATION_PATH} && \
-        GO111MODULE=auto GOOS=windows GOARCH=386 go build -o send2opsgenie32.exe send2opsgenie.go
+        GOOS=windows GOARCH=386 go build -o send2opsgenie32.exe send2opsgenie.go
     - name: Compressing Win32 Package
       run: |
           cd .release/oec-win32/
@@ -377,9 +377,9 @@ jobs:
       run: |
         INTEGRATION_PATH=oec-win64/${{ env.INTEGRATION_FOLDER }}/opsgenie-${{ env.INTEGRATION_NAME }}
         echo ${INTEGRATION_PATH}
-        go get -u github.com/alexcesaro/log && \
+        GO111MODULE=auto go get -u github.com/alexcesaro/log && \
         cd ${INTEGRATION_PATH} && \
-        GO111MODULE=auto GOOS=windows GOARCH=amd64 go build -o send2opsgenie32.exe send2opsgenie.go
+        GOOS=windows GOARCH=amd64 go build -o send2opsgenie32.exe send2opsgenie.go
     - name: Compressing Win 64 Package
       run: |
           cd .release/oec-win64/
