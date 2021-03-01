@@ -48,7 +48,7 @@ jobs:
     - name: Set up Go 1.x
       uses: actions/setup-go@v2
       with:
-        go-version: ^1.13
+        go-version: 1.15.7
       id: go
     - name: Check out code into the Go module directory
       uses: actions/checkout@v2
@@ -78,7 +78,7 @@ jobs:
       run: |
         INTEGRATION_PATH=oec-linux/${{ env.INTEGRATION_FOLDER }}/opsgenie-${{ env.INTEGRATION_NAME }}
         echo ${INTEGRATION_PATH}
-        GO111MODULE=auto go get -u github.com/alexcesaro/log && \
+        go get -u github.com/alexcesaro/log && \
         cd ${INTEGRATION_PATH} && \
         GOOS=linux GOARCH=amd64 go build -o send2opsgenie send2opsgenie.go
     - name: Compressing Linux Package
@@ -111,7 +111,7 @@ jobs:
     - name: Set up Go 1.x
       uses: actions/setup-go@v2
       with:
-        go-version: ^1.13
+        go-version: 1.15.7
       id: go
     - name: Check out code into the Go module directory
       uses: actions/checkout@v2
@@ -141,7 +141,7 @@ jobs:
       run: |
         INTEGRATION_PATH=oec-rpm/oec-scripts/opsgenie-${INTEGRATION_NAME}
         echo ${INTEGRATION_PATH}
-        GO111MODULE=auto go get -u github.com/alexcesaro/log && \
+        go get -u github.com/alexcesaro/log && \
         cd ${INTEGRATION_PATH} && \
         GOOS=linux GOARCH=amd64 go build -o send2opsgenie send2opsgenie.go
     - name: Create RPM Package 
@@ -203,7 +203,7 @@ jobs:
     - name: Set up Go 1.x
       uses: actions/setup-go@v2
       with:
-        go-version: ^1.13
+        go-version: 1.15.7
       id: go
     - name: Check out code into the Go module directory
       uses: actions/checkout@v2
@@ -235,7 +235,7 @@ jobs:
       run: |
         INTEGRATION_PATH=oec-deb/home/opsgenie/oec/opsgenie-${{ env.INTEGRATION_NAME }}
         echo ${INTEGRATION_PATH}
-        GO111MODULE=auto go get -u github.com/alexcesaro/log && \
+        go get -u github.com/alexcesaro/log && \
         cd ${INTEGRATION_PATH} && \
         GOOS=linux GOARCH=amd64 go build -o send2opsgenie send2opsgenie.go
     - name: Create Deb Package 
@@ -279,7 +279,7 @@ jobs:
     - name: Set up Go 1.x
       uses: actions/setup-go@v2
       with:
-        go-version: ^1.13
+        go-version: 1.15.7
       id: go
     - name: Check out code into the Go module directory
       uses: actions/checkout@v2
@@ -311,7 +311,7 @@ jobs:
       run: |
         INTEGRATION_PATH=oec-win32/${{ env.INTEGRATION_FOLDER }}/opsgenie-${{ env.INTEGRATION_NAME }}
         echo ${INTEGRATION_PATH}
-        GO111MODULE=auto go get -u github.com/alexcesaro/log && \
+        go get -u github.com/alexcesaro/log && \
         cd ${INTEGRATION_PATH} && \
         GOOS=windows GOARCH=386 go build -o send2opsgenie32.exe send2opsgenie.go
     - name: Compressing Win32 Package
@@ -345,7 +345,7 @@ jobs:
     - name: Set up Go 1.x
       uses: actions/setup-go@v2
       with:
-        go-version: ^1.13
+        go-version: 1.15.7
       id: go
     - name: Check out code into the Go module directory
       uses: actions/checkout@v2
@@ -377,7 +377,7 @@ jobs:
       run: |
         INTEGRATION_PATH=oec-win64/${{ env.INTEGRATION_FOLDER }}/opsgenie-${{ env.INTEGRATION_NAME }}
         echo ${INTEGRATION_PATH}
-        GO111MODULE=auto go get -u github.com/alexcesaro/log && \
+        go get -u github.com/alexcesaro/log && \
         cd ${INTEGRATION_PATH} && \
         GOOS=windows GOARCH=amd64 go build -o send2opsgenie32.exe send2opsgenie.go
     - name: Compressing Win 64 Package
