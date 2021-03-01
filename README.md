@@ -14,7 +14,7 @@
 | [Cherwell](https://github.com/opsgenie/oec-scripts/releases/tag/Cherwell-1.1.3_oec-1.1.2) |
 | [DynatraceAppMon](https://github.com/opsgenie/oec-scripts/releases/tag/DynatraceAppMon-1.1.2_oec-1.1.2) |
 | [Icinga](https://github.com/opsgenie/oec-scripts/releases/tag/Icinga-1.1.3_oec-1.1.2) |
-| [Icinga2](https://github.com/opsgenie/oec-scripts/releases/tag/Icinga2-1.1.3_oec-1.1.2) |
+| [Icinga2](https://github.com/opsgenie/oec-scripts/releases/tag/Icinga2-1.1.4_oec-1.1.2) |
 | [Jira](https://github.com/opsgenie/oec-scripts/releases/tag/Jira-1.1.1_oec-1.1.2) |
 | [JiraServiceDesk](https://github.com/opsgenie/oec-scripts/releases/tag/JiraServiceDesk-1.1.2_oec-1.1.2) |
 | [LibreNMS](https://github.com/opsgenie/oec-scripts/releases/tag/LibreNMS-1.1.1_oec-1.1.2) |
