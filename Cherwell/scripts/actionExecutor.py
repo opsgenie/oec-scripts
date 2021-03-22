@@ -377,7 +377,7 @@ def retrieve_og_customer_id():
         if response.status_code < 300 and response_body.get('fieldDefinitions'):
             full_name_field_map = None
             for field_definition in response_body.get('fieldDefinitions'):
-                if field_definition.get('displayName') == 'Full name':
+                if field_definition.get('displayName') == 'Full Name':
                     full_name_field_map = field_definition
                     break
             if full_name_field_map:
