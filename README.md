@@ -25,7 +25,7 @@
 | [PRTG](https://github.com/opsgenie/oec-scripts/releases/tag/PRTG-1.1.3_oec-1.1.3) |
 | [Solarwinds](https://github.com/opsgenie/oec-scripts/releases/tag/Solarwinds-1.1.2_oec-1.1.2) |
 | [SolarwindsMSPNCentral](https://github.com/opsgenie/oec-scripts/releases/tag/SolarwindsMSPNCentral-1.1.3_oec-1.1.3) |
-| [SolarwindsWebHelpdesk](https://github.com/opsgenie/oec-scripts/releases/tag/SolarwindsWebHelpdesk-1.1.2_oec-1.1.2) |
+| [SolarwindsWebHelpdesk](https://github.com/opsgenie/oec-scripts/releases/tag/SolarwindsWebHelpdesk-1.1.3_oec-1.1.3) |
 | [Splunk](https://github.com/opsgenie/oec-scripts/releases/tag/Splunk-1.1.3_oec-1.1.2) |
 | [Trackit](https://github.com/opsgenie/oec-scripts/releases/tag/Trackit-1.1.2_oec-1.1.2) |
 | [Xmpp](https://github.com/opsgenie/oec-scripts/releases/tag/Xmpp-1.1.2_oec-1.1.2) |
