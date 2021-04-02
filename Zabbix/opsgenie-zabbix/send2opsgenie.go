@@ -7,8 +7,6 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"github.com/alexcesaro/log"
-	"github.com/alexcesaro/log/golog"
 	"io"
 	"io/ioutil"
 	"net"
@@ -34,8 +32,8 @@ var configParameters = map[string]string{"apiKey": API_KEY,
 	"zabbix2opsgenie.http.proxy.password": ""}
 var configPath = "/home/opsgenie/oec/conf/opsgenie-integration.conf"
 var configPath2 = "/home/opsgenie/oec/conf/config.json"
-var levels = map[string]log.Level{"info": log.Info, "debug": log.Debug, "warning": log.Warning, "error": log.Error}
-var logger log.Logger
+var levels = map[string]int{"info": LogInfo, "debug": LogDebug, "warning": LogWarning, "error": LogError}
+var logger *OpsgenieFileLogger
 
 func main() {
 	configFile, err := os.Open(configPath)
@@ -69,7 +67,7 @@ func main() {
 
 func printConfigToLog() {
 	if logger != nil {
-		if logger.LogDebug() {
+		if logger.LogLevel == LogDebug {
 			logger.Debug("Config:")
 			for k, v := range configParameters {
 				if strings.Contains(k, "password") {
@@ -105,7 +103,7 @@ func readConfigFile(file io.Reader) {
 	}
 }
 
-func readConfigurationFileFromOECConfig(filepath string) (error) {
+func readConfigurationFileFromOECConfig(filepath string) error {
 
 	jsonFile, err := os.Open(filepath)
 
@@ -135,7 +133,7 @@ func readConfigurationFileFromOECConfig(filepath string) (error) {
 
 }
 
-func configureLogger() log.Logger {
+func configureLogger() *OpsgenieFileLogger {
 	level := configParameters["zabbix2opsgenie.logger"]
 	var logFilePath = parameters["logPath"]
 
@@ -143,7 +141,7 @@ func configureLogger() log.Logger {
 		logFilePath = "/var/log/opsgenie/send2opsgenie.log"
 	}
 
-	var tmpLogger log.Logger
+	var tmpLogger *OpsgenieFileLogger
 
 	file, err := os.OpenFile(logFilePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 
@@ -155,10 +153,10 @@ func configureLogger() log.Logger {
 		if errTmp != nil {
 			fmt.Println("Logging disabled. Reason: ", errTmp)
 		} else {
-			tmpLogger = golog.New(fileTmp, levels[strings.ToLower(level)])
+			tmpLogger = NewFileLogger(fileTmp, levels[strings.ToLower(level)])
 		}
 	} else {
-		tmpLogger = golog.New(file, levels[strings.ToLower(level)])
+		tmpLogger = NewFileLogger(file, levels[strings.ToLower(level)])
 	}
 
 	return tmpLogger
@@ -187,7 +185,9 @@ func getHttpClient(timeout int) *http.Client {
 		}
 		proxy = http.ProxyURL(u)
 	}
-	logger.Warning("final proxy", proxy)
+	if logger != nil {
+		logger.Warning("final proxy", proxy)
+	}
 	client := &http.Client{
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
@@ -214,7 +214,9 @@ func http_post() {
 	var logPrefix = "[TriggerId: " + parameters["triggerId"] + ", HostName: " + parameters["hostName"] + "]"
 
 	apiUrl := configParameters["opsgenie.api.url"] + "/v1/json/zabbix"
-	logger.Error("apiUrl: " + apiUrl)
+	if logger != nil {
+		logger.Error("apiUrl: " + apiUrl)
+	}
 	target := "OpsGenie"
 
 	if logger != nil {
