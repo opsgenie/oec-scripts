@@ -4,11 +4,11 @@
   "logLevel": "DEBUG",
   "globalArgs": [],
   "globalFlags": {
-    "alert_histogram_image_url": "http://localhost/nagiosxi/includes/components/nagioscore/ui/histogram.php",
-    "trends_image_url": "http://localhost/nagiosxi/includes/components/nagioscore/ui/trends.php",
-    "command_url": "http://localhost/nagiosxi/includes/components/nagioscore/ui/cmd.php",
+    "alert_histogram_image_url": "http://localhost/nagios/cgi-bin/histogram.cgi",
+    "trends_image_url": "http://localhost/nagios/cgi-bin/trends.cgi",
+    "command_url": "http://localhost/nagios/cgi-bin/cmd.cgi",
     "user": "nagiosadmin",
-    "ticket": "<your_ticket>"
+    "password": "admin"
   },
   "actionMappings": {
     "Create": {
