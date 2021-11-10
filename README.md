@@ -29,6 +29,6 @@
 | [Splunk](https://github.com/opsgenie/oec-scripts/releases/tag/Splunk-1.1.4_oec-1.1.3) |
 | [Trackit](https://github.com/opsgenie/oec-scripts/releases/tag/Trackit-1.1.3_oec-1.1.3) |
 | [Xmpp](https://github.com/opsgenie/oec-scripts/releases/tag/Xmpp-1.1.3_oec-1.1.3) |
-| [Zabbix](https://github.com/opsgenie/oec-scripts/releases/tag/Zabbix-1.1.4_oec-1.1.3) |
+| [Zabbix](https://github.com/opsgenie/oec-scripts/releases/tag/Zabbix-1.1.5_oec-1.1.3) |
 | [Zendesk](https://github.com/opsgenie/oec-scripts/releases/tag/Zendesk-1.1.3_oec-1.1.3) |
 | [Zenoss](https://github.com/opsgenie/oec-scripts/releases/tag/Zenoss-1.1.3_oec-1.1.3) |
