@@ -107,7 +107,7 @@ def main():
                         "method": "event.acknowledge",
                         "params": {
                             "eventids": queue_message["alert"]["details"]["eventId"],
-                            "message": "Acknowledged by" + alert_response.json()['data']['report'][
+                            "message": "Acknowledged by " + alert_response.json()['data']['report'][
                                 'acknowledgedBy'] + " via Opsgenie",
                             "action": 6
                         }

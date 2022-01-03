@@ -2,7 +2,7 @@
 	"Name": "OEC Service",
 	"DisplayName": "OEC Service",
 	"Description": "Run the OEC Service",
-	"OECPath" : "C:\\opsgenie\\opsgenie-oec\\OpsgenieEdgeConnector64.exe",
+	"OECPath" : "C:\\opsgenie\\opsgenie-oec\\OpsgenieEdgeConnector32.exe",
 	"Args" : ["-oec-metrics", "7070"],
 	"Env": [
 		"OEC_CONF_LOCAL_FILEPATH=C:\\opsgenie\\opsgenie-oec\\conf\\config.json",

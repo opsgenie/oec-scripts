@@ -21,7 +21,7 @@ parser.add_argument('-trends_image_url', '--trends_image_url', help='Trends Imag
                     required=False)
 parser.add_argument('-command_url', '--command_url', help='Command Url', required=False)
 parser.add_argument('-username', '--username', help='Username', required=True)
-parser.add_argument('-ticket', '--ticket', help='Ticket', required=True)
+parser.add_argument('-password', '--password', help='Password', required=True)
 parser.add_argument('-timeout', '--timeout', help='Timeout', required=False)
 parser.add_argument('-scheme', '--scheme', help='Scheme', required=False)
 parser.add_argument('-port', '--port', help='Port', required=False)
@@ -92,10 +92,6 @@ def get_image(url, entity):
     if entity == "service":
         service = parse_from_details("service_desc")
         url += "&service=" + urllib.parse.quote(service)
-
-    url += "&username=" + parse_field("username", True)
-    url += "&ticket=" + parse_field("ticket", True)
-
     logging.warning("Sending request to url: " + url)
 
     response = requests.get(url, None, auth=auth_token, timeout=timeout)
@@ -114,12 +110,12 @@ def get_image(url, entity):
 
 
 def get_alert_histogram(entity):
-    url = get_url("alert_histogram_image_url", "/nagiosxi/includes/components/nagioscore/ui/histogram.php")
+    url = get_url("alert_histogram_image_url", "/nagios/cgi-bin/histogram.cgi")
     return get_image(url, entity)
 
 
 def get_trends(entity):
-    url = get_url("trends_image_url", "/nagiosxi/includes/components/nagioscore/ui/trends.php")
+    url = get_url("trends_image_url", "/nagios/cgi-bin/trends.cgi")
     return get_image(url, entity)
 
 
@@ -303,10 +299,7 @@ def attach(entity):
 
 
 def post_to_nagios(post_params):
-    url = get_url("command_url", "/nagiosxi/includes/components/nagioscore/ui/cmd.php")
-    post_params["username"] = parse_field("username", True)
-    post_params["ticket"] = parse_field('ticket', True)
-
+    url = get_url("command_url", "/nagios/cgi-bin/cmd.cgi")
     logging.debug(LOG_PREFIX + "Posting to Nagios. Url " + url + " params:" + str(post_params))
     response = requests.post(url, post_params, timeout=timeout, auth=auth_token)
 
@@ -335,7 +328,7 @@ def main():
     logging.warning(LOG_PREFIX + " Will execute action for alertId " + alert["alertId"])
 
     username = parse_field('username', True)
-    password = parse_field('ticket', True)
+    password = parse_field('password', True)
     timeout = parse_timeout()
 
     logging.debug("Username: " + username)

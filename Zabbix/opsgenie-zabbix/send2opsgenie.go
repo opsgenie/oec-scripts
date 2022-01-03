@@ -15,6 +15,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -105,7 +106,7 @@ func readConfigFile(file io.Reader) {
 	}
 }
 
-func readConfigurationFileFromOECConfig(filepath string) (error) {
+func readConfigurationFileFromOECConfig(filepath string) error {
 
 	jsonFile, err := os.Open(filepath)
 
@@ -301,22 +302,22 @@ func parseFlags() map[string]string {
 
 	flag.Parse()
 
-	parameters["triggerName"] = *triggerName
-	parameters["triggerId"] = *triggerId
-	parameters["triggerStatus"] = *triggerStatus
-	parameters["triggerSeverity"] = *triggerSeverity
-	parameters["triggerDescription"] = *triggerDescription
+	parameters["triggerName"] = removeSpecialCharacters(*triggerName)
+	parameters["triggerId"] = removeSpecialCharacters(*triggerId)
+	parameters["triggerStatus"] = removeSpecialCharacters(*triggerStatus)
+	parameters["triggerSeverity"] = removeSpecialCharacters(*triggerSeverity)
+	parameters["triggerDescription"] = removeSpecialCharacters(*triggerDescription)
 	parameters["triggerUrl"] = *triggerUrl
-	parameters["triggerValue"] = *triggerValue
-	parameters["triggerHostGroupName"] = *triggerHostGroupName
-	parameters["hostName"] = *hostName
+	parameters["triggerValue"] = removeSpecialCharacters(*triggerValue)
+	parameters["triggerHostGroupName"] = removeSpecialCharacters(*triggerHostGroupName)
+	parameters["hostName"] = removeSpecialCharacters(*hostName)
 	parameters["ipAddress"] = *ipAddress
 	parameters["date"] = *date
 	parameters["time"] = *time
-	parameters["itemKey"] = *itemKey
-	parameters["itemValue"] = *itemValue
-	parameters["eventId"] = *eventId
-	parameters["recoveryEventStatus"] = *recoveryEventStatus
+	parameters["itemKey"] = removeSpecialCharacters(*itemKey)
+	parameters["itemValue"] = removeSpecialCharacters(*itemValue)
+	parameters["eventId"] = removeSpecialCharacters(*eventId)
+	parameters["recoveryEventStatus"] = removeSpecialCharacters(*recoveryEventStatus)
 
 	if *apiKey != "" {
 		configParameters["apiKey"] = *apiKey
@@ -349,4 +350,19 @@ func parseFlags() map[string]string {
 	}
 
 	return parameters
+}
+
+func removeSpecialCharacters(param string) string {
+	specialCharReg, err := regexp.Compile("[^a-zA-Z0-9\\s]")
+	whitespaceReg, err2 := regexp.Compile("\\s+")
+	if logger != nil && err != nil {
+		logger.Error("Error occurred while compiling regex for special characters removal. Will discard removal.", err)
+	} else if logger != nil && err2 != nil {
+		logger.Error("Error occurred while compiling regex for special characters removal. Will discard removal.", err2)
+	} else {
+		param = specialCharReg.ReplaceAllString(param, "")
+		param = whitespaceReg.ReplaceAllString(param, " ")
+		return param
+	}
+	return param
 }
