@@ -1,5 +1,6 @@
 # oec-scripts
-
+[![Contact Support](https://img.shields.io/badge/-Contact%20Support-blue)](https://support.atlassian.com/contact/#/)
+[![Public Issue Tracker](https://img.shields.io/badge/-Public%20Issue%20Tracker-blue)](https://jira.atlassian.com/browse/OPSGENIE-803?jql=project%3DOPSGENIE%20AND%20component%20in%20(%22OEC%20-%20Configuration%22%2C%20%22OEC%20-%20Installation%22)%20and%20resolution%20is%20EMPTY)
 ## Opsgenie Edge Connector (OEC) custom scripts
   
 > For more information about OEC: https://github.com/opsgenie/oec
@@ -32,3 +33,7 @@
 | [Zabbix](https://github.com/opsgenie/oec-scripts/releases/tag/Zabbix-1.1.6_oec-1.1.3) |
 | [Zendesk](https://github.com/opsgenie/oec-scripts/releases/tag/Zendesk-1.1.3_oec-1.1.3) |
 | [Zenoss](https://github.com/opsgenie/oec-scripts/releases/tag/Zenoss-1.1.3_oec-1.1.3) |
+
+## Contact Support
+You can find open bugs and suggestions for OEC on our [public issue tracker](https://jira.atlassian.com/browse/OPSGENIE-803?jql=project%3DOPSGENIE%20AND%20component%20in%20(%22OEC%20-%20Configuration%22%2C%20%22OEC%20-%20Installation%22)%20and%20resolution%20is%20EMPTY). If you are experiencing an issue with OEC, or if you want to raise a new bug or suggestion you can reach out [Opsgenie support](https://support.atlassian.com/contact/#/).
+
