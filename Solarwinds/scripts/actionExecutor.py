@@ -123,7 +123,7 @@ def main():
         timeout = int(timeout)
         
     if not verifySsl:
-        verifySsl = False
+        verifySsl = True
     else:
         verifySsl = False if verifySsl.lower() == "false" else True
 
