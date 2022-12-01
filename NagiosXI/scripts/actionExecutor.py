@@ -6,6 +6,8 @@ import sys
 import time
 import urllib.parse
 import zipfile
+import os
+import tempfile
 
 import requests
 from requests.auth import HTTPBasicAuth
@@ -263,30 +265,32 @@ def attach(entity):
     logging.warning("Attaching details")
     print("Attaching details")
 
-    file_date = time.strftime("%Y_%m_%d_%H_%m_%s")
-    file_name = "details_" + file_date + ".zip"
+    with tempfile.TemporaryDirectory() as tempdir:
+        file_date = time.strftime("%Y_%m_%d_%H_%m_%s")
+        file_name = "details_" + file_date + ".zip"
+        full_path_of_zip = os.path.join(tempdir, file_name)
 
-    # create zip
-    zip_file = zipfile.ZipFile(file_name, 'w')
-    zip_file.writestr('index.html', html_text)
-    if alert_histogram:
-        zip_file.writestr('alertHistogram.png', alert_histogram)
-    if trends:
-        zip_file.writestr('trends.png', trends)
+        # create zip
+        zip_file = zipfile.ZipFile(full_path_of_zip, 'w')
+        zip_file.writestr('index.html', html_text)
+        if alert_histogram:
+            zip_file.writestr('alertHistogram.png', alert_histogram)
+        if trends:
+            zip_file.writestr('trends.png', trends)
 
-    zip_file.close()
+        zip_file.close()
 
-    zip_obj = open(file_name, 'rb')
+        zip_obj = open(full_path_of_zip, 'rb')
 
-    attach_alert_url = parse_field('opsgenieUrl', True) + "/v2/alerts/" + alert_from_opsgenie[
-        "id"] + "/attachments?alertIdentifierType=id"
+        attach_alert_url = parse_field('opsgenieUrl', True) + "/v2/alerts/" + alert_from_opsgenie[
+            "id"] + "/attachments?alertIdentifierType=id"
 
-    headers = {
-        "Authorization": "GenieKey " + parse_field('apiKey', True)
-    }
+        headers = {
+            "Authorization": "GenieKey " + parse_field('apiKey', True)
+        }
 
-    response = requests.post(attach_alert_url, None, headers=headers, files={"file": (file_name, zip_obj)},
-                             timeout=timeout)
+        response = requests.post(attach_alert_url, None, headers=headers, files={"file": (file_name, zip_obj)},
+                                 timeout=timeout)
 
     if response.status_code < 400:
         logging.info("Successfully attached details " + file_name)
