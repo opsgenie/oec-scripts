@@ -20,7 +20,7 @@
 | [JiraServiceDesk](https://github.com/opsgenie/oec-scripts/releases/tag/JiraServiceDesk-1.1.4_oec-1.1.3) |
 | [LibreNMS](https://github.com/opsgenie/oec-scripts/releases/tag/LibreNMS-1.1.3_oec-1.1.3) |
 | [Nagios](https://github.com/opsgenie/oec-scripts/releases/tag/Nagios-1.1.4_oec-1.1.3) |
-| [NagiosXI](https://github.com/opsgenie/oec-scripts/releases/tag/NagiosXI-1.1.4_oec-1.1.3) |
+| [NagiosXI](https://github.com/opsgenie/oec-scripts/releases/tag/NagiosXI-1.1.5_oec-1.1.3) |
 | [OEC](https://github.com/opsgenie/oec-scripts/releases/tag/OEC-1.1.3_oec-1.1.3) |
 | [OP5](https://github.com/opsgenie/oec-scripts/releases/tag/OP5-1.1.3_oec-1.1.3) |
 | [PRTG](https://github.com/opsgenie/oec-scripts/releases/tag/PRTG-1.1.3_oec-1.1.3) |
