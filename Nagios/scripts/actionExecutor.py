@@ -105,9 +105,9 @@ def get_image(url, entity):
     else:
         content = response.content
         logging.warning("Could not get image from url " + url + ".ResponseCode: " + str(
-            response.status_code) + "Reason: " + content)
+            response.status_code) + "Reason: " + str(content))
         print("Could not get image from url " + url + ".ResponseCode: " + str(
-            response.status_code) + "Reason: " + content)
+            response.status_code) + "Reason: " + str(content))
         return None
 
 
