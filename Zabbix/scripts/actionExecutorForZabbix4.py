@@ -42,7 +42,7 @@ def login_to_zabbix(user, password, url):
         "jsonrpc": "2.0",
         "method": "user.login",
         "params": {
-            "user": user,
+            "username": user,
             "password": password
         },
         "id": 1
