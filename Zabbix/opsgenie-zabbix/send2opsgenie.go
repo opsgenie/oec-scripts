@@ -309,7 +309,7 @@ func parseFlags() map[string]string {
 	parameters["triggerDescription"] = *triggerDescription
 	parameters["triggerUrl"] = *triggerUrl
 	parameters["triggerValue"] = removeSpecialCharacters(*triggerValue)
-	parameters["triggerHostGroupName"] = removeSpecialCharacters(*triggerHostGroupName)
+	parameters["triggerHostGroupName"] = *triggerHostGroupName
 	parameters["hostName"] = *hostName
 	parameters["ipAddress"] = *ipAddress
 	parameters["date"] = *date
