@@ -127,7 +127,7 @@ def attach(is_service_alert):
         zip_file = zipfile.ZipFile(full_path_of_zip, 'w')
         zip_file.writestr('index.html', html_text)
         if perf_data:
-            zip_file.writestr('perfData.png', perf_data)
+            zip_file.writestr('perf_data.png', perf_data)
         zip_file.close()
 
         zip_obj = open(full_path_of_zip, 'rb')
