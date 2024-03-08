@@ -57,7 +57,8 @@ def login_to_zabbix(user, password, url):
         return login_result.json()['result']
     else:
         logging.error(
-            LOG_PREFIX + " Cannot login to Zabbix: Response " + str(login_result.status_code) + " " + str(login_result.content))
+            LOG_PREFIX + " Cannot login to Zabbix: Response " + str(login_result.status_code) + " " + str(
+                login_result.content))
 
 
 def main():
@@ -106,7 +107,7 @@ def main():
                         "id": 1,
                         "method": "event.acknowledge",
                         "params": {
-                            "eventids": queue_message["alert"]["details"]["eventId"],
+                            "eventids": parse_from_details("eventId", alert_response),
                             "message": "Acknowledged by " + alert_response.json()['data']['report'][
                                 'acknowledgedBy'] + " via Opsgenie",
                             "action": 6
@@ -132,6 +133,12 @@ def main():
             logging.warning("Alert with id [" + str(alert_id) + "] does not exist in Opsgenie. It is probably deleted.")
     else:
         logging.warning("Alert id does not exist ")
+
+
+def parse_from_details(key, alert_response):
+    if key in alert_response.json()['data']["details"].keys():
+        return alert_response.json()['data']["details"][key]
+    return ""
 
 
 if __name__ == '__main__':

@@ -107,7 +107,7 @@ def main():
                         "id": 1,
                         "method": "event.acknowledge",
                         "params": {
-                            "eventids": queue_message["alert"]["details"]["eventId"],
+                            "eventids": parse_from_details("eventId", alert_response),
                             "message": "Acknowledged by " + alert_response.json()['data']['report'][
                                 'acknowledgedBy'] + " via Opsgenie"
                         }
@@ -134,6 +134,10 @@ def main():
     else:
         logging.warning("Alert id does not exist ")
 
+def parse_from_details(key,alert_response):
+    if key in alert_response.json()['data']["details"].keys():
+        return alert_response.json()['data']["details"][key]
+    return ""
 
 if __name__ == '__main__':
     main()
