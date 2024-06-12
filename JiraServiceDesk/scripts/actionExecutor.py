@@ -149,7 +149,7 @@ def main():
                     content = {
                         "details":
                             {
-                                "issueKey": issue_key_from_response
+                                "IssueKey": issue_key_from_response
                             }
                     }
                     headers = {
