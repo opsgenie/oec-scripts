@@ -7,8 +7,6 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"github.com/alexcesaro/log"
-	"github.com/alexcesaro/log/golog"
 	"io"
 	"io/ioutil"
 	"net"
@@ -33,7 +31,7 @@ var configParameters = map[string]string{"apiKey": API_KEY,
 	"bmcRemedy2opsgenie.http.proxy.username": "",
 	"bmcRemedy2opsgenie.http.proxy.password": ""}
 
-var logger log.Logger
+var logger *OpsgenieFileLogger
 
 type Incident struct {
 	IncidentID         string
@@ -71,7 +69,9 @@ func main() {
 	}
 	loggerPath := filepath.Dir(scriptPath)
 	logger = configureLogger(loggerPath)
-	logger.Info("Initializing BMC Remedy to Opsgenie Script..\r\n")
+	if logger != nil {
+		logger.Info("Initializing BMC Remedy to Opsgenie Script..\r\n")
+	}
 
 	configPathPtr := flag.String("config-path", "C:\\OpsGenie\\BMCRemedyIntegration\\opsgenie-integration\\conf\\opsgenie-integration.conf", "OpsGenie Config Path")
 	configFile, err := os.Open(*configPathPtr)
@@ -89,7 +89,9 @@ func main() {
 		panic(errFromConf)
 	}
 
-	logger.Debug(configParameters, "\r\n")
+	if logger != nil {
+		logger.Debug(configParameters, "\r\n")
+	}
 	printConfigToLog()
 
 	incident := parseFlags()
@@ -145,8 +147,10 @@ func parseFlags() Incident {
 		*Resolution}
 	API_KEY = *OpsGenieIntegrationAPIKey
 
-	logger.Info("Flags parsed successfully:\r\n")
-	logger.Debug(incident, "\r\n")
+	if logger != nil {
+		logger.Info("Flags parsed successfully:\r\n")
+		logger.Debug(incident, "\r\n")
+	}
 	return incident
 }
 
@@ -173,7 +177,9 @@ func getHttpClient(timeout int) *http.Client {
 		}
 		proxy = http.ProxyURL(u)
 	}
-	logger.Warning("final proxy", proxy, "\r\n")
+	if logger != nil {
+		logger.Warning("final proxy", proxy, "\r\n")
+	}
 	client := &http.Client{
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
@@ -255,15 +261,15 @@ func http_post(jsonBody []byte, incidentID string) {
 	}
 }
 
-func configureLogger(logFilePath string) log.Logger {
+func configureLogger(logFilePath string) *OpsgenieFileLogger {
 	logFilePath += "\\send2opsgenie.log"
-	var tmpLogger log.Logger
+	var tmpLogger *OpsgenieFileLogger
 	file, err := os.OpenFile(logFilePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 
 	if err != nil {
 		fmt.Println("Could not create log file \""+logFilePath+" Error: ", err)
 	} else {
-		tmpLogger = golog.New(file, log.Info)
+		tmpLogger = NewFileLogger(file, LogInfo)
 	}
 
 	return tmpLogger
@@ -271,7 +277,6 @@ func configureLogger(logFilePath string) log.Logger {
 
 func printConfigToLog() {
 	if logger != nil {
-
 		logger.Debug("Config:\r\n")
 		for k, v := range configParameters {
 			if strings.Contains(k, "password") {
@@ -280,12 +285,13 @@ func printConfigToLog() {
 				logger.Debug(k, "=", v, "\r\n")
 			}
 		}
-
 	}
 }
 
 func readConfigFile(file io.Reader, configPathPtr *string) {
-	logger.Info("Reading config file located at:", *configPathPtr, "\r\n")
+	if logger != nil {
+		logger.Info("Reading config file located at:", *configPathPtr, "\r\n")
+	}
 	scanner := bufio.NewScanner(file)
 
 	for scanner.Scan() {
@@ -297,7 +303,9 @@ func readConfigFile(file io.Reader, configPathPtr *string) {
 			l[0] = strings.TrimSpace(l[0])
 			l[1] = strings.TrimSpace(l[1])
 			configParameters[l[0]] = l[1]
-			logger.Info("key:", l[0], "value:", l[1])
+			if logger != nil {
+				logger.Info("key:", l[0], "value:", l[1])
+			}
 			if l[0] == "timeout" {
 				TOTAL_TIME, _ = strconv.Atoi(l[1])
 			}
@@ -346,7 +354,9 @@ type Configuration struct {
 
 func check(err error) {
 	if err != nil {
+		if logger != nil {
+			logger.Error(err, "\r\n")
+		}
 		panic(err)
-		logger.Error(err, "\r\n")
 	}
 }

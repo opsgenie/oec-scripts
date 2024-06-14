@@ -7,8 +7,6 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"github.com/alexcesaro/log"
-	"github.com/alexcesaro/log/golog"
 	"io"
 	"io/ioutil"
 	"net"
@@ -36,8 +34,8 @@ var configParameters = map[string]string{"apiKey": API_KEY,
 var parameters = make(map[string]string)
 var configPath = "/home/opsgenie/oec/conf/opsgenie-integration.conf"
 var configPath2 = "/home/opsgenie/oec/conf/config.json"
-var levels = map[string]log.Level{"info": log.Info, "debug": log.Debug, "warning": log.Warning, "error": log.Error}
-var logger log.Logger
+var levels = map[string]int{"info": LogInfo, "debug": LogDebug, "warning": LogWarning, "error": LogError}
+var logger *OpsgenieFileLogger
 
 func main() {
 	configFile, err := os.Open(configPath)
@@ -79,7 +77,7 @@ func main() {
 
 func printConfigToLog() {
 	if logger != nil {
-		if logger.LogDebug() {
+		if logger.LogLevel == LogDebug {
 			logger.Debug("Config:")
 			for k, v := range configParameters {
 
@@ -110,7 +108,7 @@ func readConfigFile(file io.Reader) {
 	}
 }
 
-func readConfigurationFileFromOECConfig(filepath string) (error) {
+func readConfigurationFileFromOECConfig(filepath string) error {
 
 	jsonFile, err := os.Open(filepath)
 
@@ -145,7 +143,7 @@ type Configuration struct {
 	BaseUrl string `json:"baseUrl"`
 }
 
-func configureLogger() log.Logger {
+func configureLogger() *OpsgenieFileLogger {
 	level := configParameters["nagios2opsgenie.logger"]
 	var logFilePath = parameters["logPath"]
 
@@ -153,7 +151,7 @@ func configureLogger() log.Logger {
 		logFilePath = "/var/log/opsgenie/send2opsgenie.log"
 	}
 
-	var tmpLogger log.Logger
+	var tmpLogger *OpsgenieFileLogger
 
 	file, err := os.OpenFile(logFilePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 
@@ -165,10 +163,10 @@ func configureLogger() log.Logger {
 		if errTmp != nil {
 			fmt.Println("Logging disabled. Reason: ", errTmp)
 		} else {
-			tmpLogger = golog.New(fileTmp, levels[strings.ToLower(level)])
+			tmpLogger = NewFileLogger(fileTmp, levels[strings.ToLower(level)])
 		}
 	} else {
-		tmpLogger = golog.New(file, levels[strings.ToLower(level)])
+		tmpLogger = NewFileLogger(file, levels[strings.ToLower(level)])
 	}
 
 	return tmpLogger
@@ -247,7 +245,9 @@ func http_post() {
 		}
 
 		strRequest, _ := json.Marshal(request)
-		logger.Debug("strReq: " + string(strRequest))
+		if logger != nil {
+			logger.Debug("strReq: " + string(strRequest))
+		}
 
 		resp, error := client.Do(request)
 		if error == nil {
