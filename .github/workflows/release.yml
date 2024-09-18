@@ -86,7 +86,7 @@ jobs:
           cd .release/oec-linux/
           zip -r opsgenie-${{ env.INTEGRATION_NAME }}-${{ env.INTEGRATION_VERSION }}-linux-amd64.zip ./${{ env.INTEGRATION_FOLDER }}
     - name: Upload Artifact
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: Linux Artifact
         path: .release/oec-linux/*.zip
@@ -164,12 +164,12 @@ jobs:
     - name: Move RHEL6 Package
       run: mv ~/rpmbuild/RPMS/x86_64/opsgenie-${{ env.INTEGRATION_NAME }}-rhel6-${{ env.INTEGRATION_VERSION }}-1.x86_64.rpm .release/oec-rpm/opsgenie-${{ env.INTEGRATION_NAME }}-${{ env.INTEGRATION_VERSION }}.rhel6.x86_64.rpm
     - name: Upload RPM Artifact
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: RPM Artifact
         path: .release/oec-rpm/opsgenie-${{ env.INTEGRATION_NAME }}-${{ env.INTEGRATION_VERSION }}.x86_64.rpm
     - name: Upload RHEL6 Artifact
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: RHEL6 Artifact
         path: .release/oec-rpm/opsgenie-${{ env.INTEGRATION_NAME }}-${{ env.INTEGRATION_VERSION }}.rhel6.x86_64.rpm
@@ -253,7 +253,7 @@ jobs:
     - name: Move Deb Package
       run: mv .release/deb-package/*.deb .release/oec-deb/opsgenie-${{ env.INTEGRATION_NAME }}_${{ env.INTEGRATION_VERSION }}_amd64.deb
     - name: Upload Artifact
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: Debian Artifact
         path: .release/oec-deb/opsgenie-${{ env.INTEGRATION_NAME }}_${{ env.INTEGRATION_VERSION }}_amd64.deb
@@ -319,7 +319,7 @@ jobs:
           cd .release/oec-win32/
           zip -r ${{ env.INTEGRATION_FOLDER }}.zip ./${{ env.INTEGRATION_FOLDER }}
     - name: Upload Artifact
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: Win32 Artifact
         path: .release/oec-win32/*.zip
@@ -385,7 +385,7 @@ jobs:
           cd .release/oec-win64/
           zip -r ${{ env.INTEGRATION_FOLDER }}.zip ./${{ env.INTEGRATION_FOLDER }}
     - name: Upload Artifact
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: Win64 Artifact
         path: .release/oec-win64/*.zip
