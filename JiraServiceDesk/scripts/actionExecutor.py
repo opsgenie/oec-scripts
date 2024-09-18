@@ -99,7 +99,7 @@ def main():
     token = HTTPBasicAuth(username, password)
     headers = {
         "Content-Type": "application/json",
-        "Accept-Language": "application/json"
+        "Accept": "application/json"
     }
 
     result_url = url + "/rest/api/2/issue"
