@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
     inputs:
       integration:
-        description: 'Integration'     
+        description: 'Integration'
         required: true
       oec-version:
         description: 'Version of OEC'
@@ -63,6 +63,12 @@ jobs:
         file: oec-linux-amd64-${{ github.event.inputs.oec-version }}.zip
     - name: Extracting Linux Package
       run: unzip -qq oec-linux-amd64-${{ github.event.inputs.oec-version }}.zip -d .release/oec-linux/${{ env.INTEGRATION_FOLDER }}
+    - name: Copy Log File if Incoming part exist
+      run: |
+        if [ -d ${{ github.event.inputs.integration }}/opsgenie-${{ env.INTEGRATION_NAME }} ]
+        then
+          cp -R release/log/log.go ${{ github.event.inputs.integration }}/opsgenie-${{ env.INTEGRATION_NAME }}/.
+        fi
     - name: Copy Integration Files
       run: cp -R ${{ github.event.inputs.integration }}/. .release/oec-linux/${{ env.INTEGRATION_FOLDER }}
     - name: Remove http script (todo remove when http version is released)
@@ -78,9 +84,9 @@ jobs:
       run: |
         INTEGRATION_PATH=oec-linux/${{ env.INTEGRATION_FOLDER }}/opsgenie-${{ env.INTEGRATION_NAME }}
         echo ${INTEGRATION_PATH}
-        go get -u github.com/alexcesaro/log && \
         cd ${INTEGRATION_PATH} && \
-        GOOS=linux GOARCH=amd64 go build -o send2opsgenie send2opsgenie.go
+        GOOS=linux GOARCH=amd64 go build -o send2opsgenie send2opsgenie.go log.go
+        rm -f log.go
     - name: Compressing Linux Package
       run: |
           cd .release/oec-linux/
@@ -128,6 +134,12 @@ jobs:
       run: unzip -qq oec-linux-amd64-${{ github.event.inputs.oec-version }}.zip -d .release/oec-rpm
     - name: Copy SPEC Files
       run: cp -R release/oec-builder/oec-rpm/. .release/oec-rpm
+    - name: Copy Log File if Incoming part exist
+      run: |
+        if [ -d ${{ github.event.inputs.integration }}/opsgenie-${{ env.INTEGRATION_NAME }} ]
+        then
+          cp -R release/log/log.go ${{ github.event.inputs.integration }}/opsgenie-${{ env.INTEGRATION_NAME }}/.
+        fi
     - name: Copy Integration Files
       run: cp -R ${{ github.event.inputs.integration }}/. .release/oec-rpm/oec-scripts
     - name: Check Incoming part exists
@@ -141,10 +153,10 @@ jobs:
       run: |
         INTEGRATION_PATH=oec-rpm/oec-scripts/opsgenie-${INTEGRATION_NAME}
         echo ${INTEGRATION_PATH}
-        go get -u github.com/alexcesaro/log && \
         cd ${INTEGRATION_PATH} && \
-        GOOS=linux GOARCH=amd64 go build -o send2opsgenie send2opsgenie.go
-    - name: Create RPM Package 
+        GOOS=linux GOARCH=amd64 go build -o send2opsgenie send2opsgenie.go log.go
+        rm -f log.go
+    - name: Create RPM Package
       working-directory: .release/oec-rpm
       run: |
         sed -i "s|<path_of_script>|$RPM_BUILD_ROOT/home/opsgenie/oec/scripts/actionExecutor.py|" oec-scripts/conf/config.json
@@ -222,6 +234,12 @@ jobs:
       run: cp -R release/oec-builder/oec-deb/. .release/oec-deb
     - name: Create Output Directory
       run: mkdir -p .release/oec-deb/home/opsgenie/oec
+    - name: Copy Log File if Incoming part exist
+      run: |
+        if [ -d ${{ github.event.inputs.integration }}/opsgenie-${{ env.INTEGRATION_NAME }} ]
+        then
+          cp -R release/log/log.go ${{ github.event.inputs.integration }}/opsgenie-${{ env.INTEGRATION_NAME }}/.
+        fi
     - name: Copy Integration Files
       run: cp -R ${{ github.event.inputs.integration }}/. .release/oec-deb/home/opsgenie/oec
     - name: Check Incoming part exists
@@ -235,10 +253,10 @@ jobs:
       run: |
         INTEGRATION_PATH=oec-deb/home/opsgenie/oec/opsgenie-${{ env.INTEGRATION_NAME }}
         echo ${INTEGRATION_PATH}
-        go get -u github.com/alexcesaro/log && \
         cd ${INTEGRATION_PATH} && \
-        GOOS=linux GOARCH=amd64 go build -o send2opsgenie send2opsgenie.go
-    - name: Create Deb Package 
+        GOOS=linux GOARCH=amd64 go build -o send2opsgenie send2opsgenie.go log.go
+        rm -f log.go
+    - name: Create Deb Package
       working-directory: .release/
       run: |
         sed -i "s|<path_of_script>|/home/opsgenie/oec/scripts/actionExecutor.py|" oec-deb/home/opsgenie/oec/conf/config.json
@@ -257,7 +275,7 @@ jobs:
       with:
         name: Debian Artifact
         path: .release/oec-deb/opsgenie-${{ env.INTEGRATION_NAME }}_${{ env.INTEGRATION_VERSION }}_amd64.deb
-    - name: Upload 
+    - name: Upload
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -274,7 +292,7 @@ jobs:
       INTEGRATION_NAME: ${{ needs.setup.outputs.integration_name }}
       INTEGRATION_VERSION: ${{ needs.setup.outputs.integration_version }}
       INTEGRATION_FOLDER: opsgenie-${{ needs.setup.outputs.integration_name }}-${{ needs.setup.outputs.integration_version }}-win-386
-    if: github.ref == 'refs/heads/master'    
+    if: github.ref == 'refs/heads/master'
     steps:
     - name: Set up Go 1.x
       uses: actions/setup-go@v2
@@ -296,6 +314,12 @@ jobs:
       run: unzip -qq oec-win-386-${{ github.event.inputs.oec-version }}.zip -d .release/oec-win32/${{ env.INTEGRATION_FOLDER }}
     - name: Copy OEC Service Conf
       run: cp -R release/oec-builder/oec-win32/oecService.json.example .release/oec-win32/${{ env.INTEGRATION_FOLDER }}
+    - name: Copy Log File if Incoming part exist
+      run: |
+        if [ -d ${{ github.event.inputs.integration }}/opsgenie-${{ env.INTEGRATION_NAME }} ]
+        then
+          cp -R release/log/log.go ${{ github.event.inputs.integration }}/opsgenie-${{ env.INTEGRATION_NAME }}/.
+        fi
     - name: Copy Integration Files
       run: cp -R ${{ github.event.inputs.integration }}/. .release/oec-win32/${{ env.INTEGRATION_FOLDER }}
     - name: Remove http script (todo remove when http version is released)
@@ -311,9 +335,9 @@ jobs:
       run: |
         INTEGRATION_PATH=oec-win32/${{ env.INTEGRATION_FOLDER }}/opsgenie-${{ env.INTEGRATION_NAME }}
         echo ${INTEGRATION_PATH}
-        go get -u github.com/alexcesaro/log && \
         cd ${INTEGRATION_PATH} && \
-        GOOS=windows GOARCH=386 go build -o send2opsgenie32.exe send2opsgenie.go
+        GOOS=linux GOARCH=amd64 go build -o send2opsgenie send2opsgenie.go log.go
+        rm -f log.go
     - name: Compressing Win32 Package
       run: |
           cd .release/oec-win32/
@@ -340,7 +364,7 @@ jobs:
       INTEGRATION_NAME: ${{ needs.setup.outputs.integration_name }}
       INTEGRATION_VERSION: ${{ needs.setup.outputs.integration_version }}
       INTEGRATION_FOLDER: opsgenie-${{ needs.setup.outputs.integration_name }}-${{ needs.setup.outputs.integration_version }}-win-amd64
-    if: github.ref == 'refs/heads/master'    
+    if: github.ref == 'refs/heads/master'
     steps:
     - name: Set up Go 1.x
       uses: actions/setup-go@v2
@@ -362,6 +386,12 @@ jobs:
       run: unzip -qq oec-win-amd64-${{ github.event.inputs.oec-version }}.zip -d .release/oec-win64/${{ env.INTEGRATION_FOLDER }}
     - name: Copy OEC Service Conf
       run: cp -R release/oec-builder/oec-win64/oecService.json.example .release/oec-win64/${{ env.INTEGRATION_FOLDER }}
+    - name: Copy Log File if Incoming part exist
+      run: |
+        if [ -d ${{ github.event.inputs.integration }}/opsgenie-${{ env.INTEGRATION_NAME }} ]
+        then
+          cp -R release/log/log.go ${{ github.event.inputs.integration }}/opsgenie-${{ env.INTEGRATION_NAME }}/.
+        fi
     - name: Copy Integration Files
       run: cp -R ${{ github.event.inputs.integration }}/. .release/oec-win64/${{ env.INTEGRATION_FOLDER }}
     - name: Remove http script (todo remove when http version is released)
@@ -377,9 +407,9 @@ jobs:
       run: |
         INTEGRATION_PATH=oec-win64/${{ env.INTEGRATION_FOLDER }}/opsgenie-${{ env.INTEGRATION_NAME }}
         echo ${INTEGRATION_PATH}
-        go get -u github.com/alexcesaro/log && \
         cd ${INTEGRATION_PATH} && \
-        GOOS=windows GOARCH=amd64 go build -o send2opsgenie32.exe send2opsgenie.go
+        GOOS=linux GOARCH=amd64 go build -o send2opsgenie send2opsgenie.go log.go
+        rm -f log.go
     - name: Compressing Win 64 Package
       run: |
           cd .release/oec-win64/

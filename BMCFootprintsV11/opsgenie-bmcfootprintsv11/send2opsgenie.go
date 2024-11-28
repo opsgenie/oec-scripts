@@ -8,8 +8,6 @@ import (
 	"encoding/xml"
 	"flag"
 	"fmt"
-	"github.com/alexcesaro/log"
-	"github.com/alexcesaro/log/golog"
 	"io"
 	"io/ioutil"
 	"net"
@@ -41,8 +39,8 @@ var bmcFootPrintsWebServiceURL string
 
 var configPath string
 var configPath2 string
-var levels = map[string]log.Level{"info": log.Info, "debug": log.Debug, "warning": log.Warning, "error": log.Error}
-var logger log.Logger
+var levels = map[string]int{"info": LogInfo, "debug": LogDebug, "warning": LogWarning, "error": LogError}
+var logger *OpsgenieFileLogger
 var ogPrefix string = "[OpsGenie] "
 
 type Item struct {
@@ -189,14 +187,18 @@ func main() {
 		parameters["closureCode"] = issueDetails.ClosureCode
 	} else if len(issueDetails.AllDescriptions.Items) > 1 {
 		if strings.HasPrefix(issueDetails.Description, ogPrefix) {
-			logger.Debug("Skipping, Incident or Problem was created from OpsGenie.")
+			if logger != nil {
+				logger.Debug("Skipping, Incident or Problem was created from OpsGenie.")
+			}
 			return
 		}
 
 		parameters["action"] = "AddNote"
 	} else {
 		if strings.HasPrefix(issueDetails.Description, ogPrefix) {
-			logger.Debug("Skipping, Incident or Problem was created from OpsGenie.")
+			if logger != nil {
+				logger.Debug("Skipping, Incident or Problem was created from OpsGenie.")
+			}
 			return
 		}
 
@@ -234,7 +236,7 @@ func main() {
 
 func printConfigToLog() {
 	if logger != nil {
-		if logger.LogDebug() {
+		if logger.LogLevel == LogDebug {
 			logger.Debug("Config:")
 			for k, v := range configParameters {
 				if strings.Contains(k, "password") {
@@ -267,7 +269,7 @@ func readConfigFile(file io.Reader) {
 	}
 }
 
-func readConfigurationFileFromOECConfig(filepath string) (error) {
+func readConfigurationFileFromOECConfig(filepath string) error {
 
 	jsonFile, err := os.Open(filepath)
 
@@ -302,7 +304,7 @@ type Configuration struct {
 	BaseUrl string `json:"baseUrl"`
 }
 
-func configureLogger() log.Logger {
+func configureLogger() *OpsgenieFileLogger {
 	level := configParameters["bmcFootPrints2opsgenie.logger"]
 	var logFilePath = parameters["logPath"]
 
@@ -314,7 +316,7 @@ func configureLogger() log.Logger {
 		}
 	}
 
-	var tmpLogger log.Logger
+	var tmpLogger *OpsgenieFileLogger
 
 	file, err := os.OpenFile(logFilePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 
@@ -333,10 +335,10 @@ func configureLogger() log.Logger {
 		if errTmp != nil {
 			fmt.Println("Logging disabled. Reason: ", errTmp)
 		} else {
-			tmpLogger = golog.New(fileTmp, levels[strings.ToLower(level)])
+			tmpLogger = NewFileLogger(fileTmp, levels[strings.ToLower(level)])
 		}
 	} else {
-		tmpLogger = golog.New(file, levels[strings.ToLower(level)])
+		tmpLogger = NewFileLogger(file, levels[strings.ToLower(level)])
 	}
 
 	return tmpLogger
@@ -546,19 +548,19 @@ func parseFlags() {
 	if *apiKey != "" {
 		parameters["apiKey"] = *apiKey
 	} else {
-		parameters["apiKey"] = configParameters ["apiKey"]
+		parameters["apiKey"] = configParameters["apiKey"]
 	}
 
 	if *responders != "" {
 		parameters["responders"] = *responders
 	} else {
-		parameters["responders"] = configParameters ["responders"]
+		parameters["responders"] = configParameters["responders"]
 	}
 
 	if *tags != "" {
 		parameters["tags"] = *tags
 	} else {
-		parameters["tags"] = configParameters ["tags"]
+		parameters["tags"] = configParameters["tags"]
 	}
 
 	if *logPath != "" {
