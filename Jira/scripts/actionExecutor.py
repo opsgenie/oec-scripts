@@ -2,6 +2,7 @@ import argparse
 import json
 import logging
 import sys
+import re
 
 import requests
 from requests.auth import HTTPBasicAuth
@@ -122,7 +123,7 @@ def main():
                 },
                 "summary": queue_message.get("summary"),
                 "description": queue_message.get("description"),
-                "labels": [toLabel.replace("\\s", "")]
+                "labels": [ re.sub('\s', '', toLabel) ]
             }
         }
     elif mapped_action == "resolveIssue":
