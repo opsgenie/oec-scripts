@@ -14,7 +14,7 @@ jobs:
           echo ::set-output name=INTEGRATION_NAME::$name
           echo ::set-output name=INTEGRATION_VERSION::$version
       - name: Checkout the repository with branch
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
       - name: Set branch name to env
         id: prepare-branch-name
         run: |
