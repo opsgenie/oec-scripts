@@ -4,7 +4,7 @@
   "logLevel": "DEBUG",
   "globalArgs": [],
   "globalFlags": {
-    "url": "https://<your_solarwinds_server_IP_or_FQDN>:17778",
+    "url": "https://<your_solarwinds_server_IP_or_FQDN>:17774",
     "login": "<name_of_solarwinds_user_that_can_acknowledge_alerts>",
     "password": "<password_for_solarwinds_user_that_can_acknowledge_alerts>"
   },
