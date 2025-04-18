@@ -17,7 +17,7 @@
 | [Icinga](https://github.com/opsgenie/oec-scripts/releases/tag/Icinga-1.1.5_oec-1.1.3) |
 | [Icinga2](https://github.com/opsgenie/oec-scripts/releases/tag/Icinga2-1.1.6_oec-1.1.3) |
 | [Jira](https://github.com/opsgenie/oec-scripts/releases/tag/Jira-1.1.3_oec-1.1.3) |
-| [JiraServiceDesk](https://github.com/opsgenie/oec-scripts/releases/tag/JiraServiceDesk-1.1.4_oec-1.1.3) |
+| [JiraServiceDesk](https://github.com/opsgenie/oec-scripts/releases/tag/JiraServiceDesk-1.1.6_oec-1.1.4) |
 | [LibreNMS](https://github.com/opsgenie/oec-scripts/releases/tag/LibreNMS-1.1.3_oec-1.1.3) |
 | [Nagios](https://github.com/opsgenie/oec-scripts/releases/tag/Nagios-1.1.4_oec-1.1.3) |
 | [NagiosXI](https://github.com/opsgenie/oec-scripts/releases/tag/NagiosXI-1.1.5_oec-1.1.3) |
