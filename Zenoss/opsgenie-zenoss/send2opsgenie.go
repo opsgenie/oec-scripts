@@ -1,41 +1,39 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
+	"crypto/tls"
 	"encoding/json"
 	"flag"
-	"net/http"
-	"net"
-	"time"
-	"os"
-	"bufio"
-	"strings"
-	"io"
-	"strconv"
-	"github.com/alexcesaro/log/golog"
-	"github.com/alexcesaro/log"
 	"fmt"
+	"io"
 	"io/ioutil"
-	"crypto/tls"
+	"net"
+	"net/http"
 	"net/url"
+	"os"
+	"strconv"
+	"strings"
+	"time"
 )
 
 var API_KEY = ""
 var TOTAL_TIME = 60
 var configParameters = map[string]string{"apiKey": API_KEY,
-	"zenoss2opsgenie.logger": "warning",
-	"opsgenie.api.url": "https://api.opsgenie.com",
-	"zenoss2opsgenie.http.proxy.enabled": "false",
-	"zenoss2opsgenie.http.proxy.port": "1111",
-	"zenoss2opsgenie.http.proxy.host": "localhost",
+	"zenoss2opsgenie.logger":              "warning",
+	"opsgenie.api.url":                    "https://api.opsgenie.com",
+	"zenoss2opsgenie.http.proxy.enabled":  "false",
+	"zenoss2opsgenie.http.proxy.port":     "1111",
+	"zenoss2opsgenie.http.proxy.host":     "localhost",
 	"zenoss2opsgenie.http.proxy.protocol": "http",
 	"zenoss2opsgenie.http.proxy.username": "",
 	"zenoss2opsgenie.http.proxy.password": ""}
 var parameters = make(map[string]interface{})
 var configPath = "/home/opsgenie/oec/conf/opsgenie-integration.conf"
 var configPath2 = "/home/opsgenie/oec/conf/config.json"
-var levels = map[string]log.Level{"info": log.Info, "debug": log.Debug, "warning": log.Warning, "error": log.Error}
-var logger log.Logger
+var levels = map[string]int{"info": LogInfo, "debug": LogDebug, "warning": LogWarning, "error": LogError}
+var logger *OpsgenieFileLogger
 var logPrefix string
 var eventState string
 
@@ -53,9 +51,11 @@ func main() {
 	}
 	logPrefix = "[EventId: " + parameters["evid"].(string) + "]"
 	if parameters["test"] == true {
-		logger.Warning("Sending test alert to OpsGenie.")
+		if logger != nil {
+			logger.Warning("Sending test alert to OpsGenie.")
+		}
 	} else {
-		if (strings.ToLower(eventState) == "close") {
+		if strings.ToLower(eventState) == "close" {
 			if logger != nil {
 				logger.Info("eventState flag is set to close. Will not try to retrieve event details from zenoss")
 			}
@@ -68,7 +68,7 @@ func main() {
 
 func printConfigToLog() {
 	if logger != nil {
-		if (logger.LogDebug()) {
+		if logger.LogLevel == LogDebug {
 			logger.Debug("Config:")
 			for k, v := range configParameters {
 				if strings.Contains(k, "password") {
@@ -101,7 +101,7 @@ func readConfigFile(file io.Reader) {
 		panic(err)
 	}
 }
-func readConfigurationFileFromOECConfig(filepath string) (error) {
+func readConfigurationFileFromOECConfig(filepath string) error {
 
 	jsonFile, err := os.Open(filepath)
 
@@ -135,7 +135,8 @@ type Configuration struct {
 	ApiKey  string `json:"apiKey"`
 	BaseUrl string `json:"baseUrl"`
 }
-func configureLogger() log.Logger {
+
+func configureLogger() *OpsgenieFileLogger {
 	level := configParameters["zenoss2opsgenie.logger"]
 	var logFilePath = parameters["logPath"].(string)
 
@@ -143,7 +144,7 @@ func configureLogger() log.Logger {
 		logFilePath = "/var/log/opsgenie/send2opsgenie.log"
 	}
 
-	var tmpLogger log.Logger
+	var tmpLogger *OpsgenieFileLogger
 
 	file, err := os.OpenFile(logFilePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 
@@ -155,10 +156,10 @@ func configureLogger() log.Logger {
 		if errTmp != nil {
 			fmt.Println("Logging disabled. Reason: ", errTmp)
 		} else {
-			tmpLogger = golog.New(fileTmp, levels[strings.ToLower(level)])
+			tmpLogger = NewFileLogger(fileTmp, levels[strings.ToLower(level)])
 		}
 	} else {
-		tmpLogger = golog.New(file, levels[strings.ToLower(level)])
+		tmpLogger = NewFileLogger(file, levels[strings.ToLower(level)])
 	}
 
 	return tmpLogger
@@ -341,7 +342,7 @@ func parseFlags() {
 
 	args := flag.Args()
 	for i := 0; i < len(args); i += 2 {
-		if (len(args)%2 != 0 && i == len(args)-1) {
+		if len(args)%2 != 0 && i == len(args)-1 {
 			parameters[args[i]] = ""
 		} else {
 			parameters[args[i]] = args[i+1]
@@ -378,13 +379,13 @@ func parseFlags() {
 	if *responders != "" {
 		parameters["responders"] = *responders
 	} else {
-		parameters["responders"] = configParameters ["responders"]
+		parameters["responders"] = configParameters["responders"]
 	}
 
 	if *tags != "" {
 		parameters["tags"] = *tags
 	} else {
-		parameters["tags"] = configParameters ["tags"]
+		parameters["tags"] = configParameters["tags"]
 	}
 
 	if *logPath != "" {
