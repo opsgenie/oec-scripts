@@ -47,7 +47,7 @@ def send_close_request():
         logging.debug(LOG_PREFIX + " Solarwinds response:" + str(response.content))
     else:
         logging.error(
-            LOG_PREFIX + " Could not execute at Solarwinds; response: " + response.status_code + ' ' + str(
+            LOG_PREFIX + " Could not execute at Solarwinds; response: " + str(response.status_code) + ' ' + str(
                 response.content))
 
 
@@ -65,7 +65,7 @@ def send_acknowledge_request():
         logging.debug(LOG_PREFIX + " Solarwinds response:" + str(response.content))
     else:
         logging.error(
-            LOG_PREFIX + " Could not execute at Solarwinds; response: " + response.status_code + ' ' + str(
+            LOG_PREFIX + " Could not execute at Solarwinds; response: " + str(response.status_code) + ' ' + str(
                 response.content))
 
 
@@ -99,7 +99,7 @@ def send_add_note_request():
         logging.debug(LOG_PREFIX + " Solarwinds response:" + str(response.content))
     else:
         logging.error(
-            LOG_PREFIX + " Could not execute at Solarwinds; response: " + response.status_code + ' ' + str(
+            LOG_PREFIX + " Could not execute at Solarwinds; response: " + str(response.status_code) + ' ' + str(
                 response.content))
 
 
