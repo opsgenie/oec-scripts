@@ -8,7 +8,19 @@
     "apiToken": "<apiToken>"
   },
   "actionMappings": {
-    "acknowledgeNotification": {
+    "Acknowledge": {
+      "filepath": "<path_of_script>",
+      "sourceType": "<local | git>",
+      "env": [],
+      "stdout": "<path_of_output_file_of_script>"
+    },
+    "AddNote": {
+      "filepath": "<path_of_script>",
+      "sourceType": "<local | git>",
+      "env": [],
+      "stdout": "<path_of_output_file_of_script>"
+    },
+    "Close": {
       "filepath": "<path_of_script>",
       "sourceType": "<local | git>",
       "env": [],
